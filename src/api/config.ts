@@ -84,7 +84,7 @@ function buildConfig(): ApiConfig {
       environmentLabel: 'Production disabled',
       status: 'blocked',
       statusMessage:
-        'Production API access is disabled in Mobile Phase 3. Use staging mode with a staging gateway URL.',
+        'Production API access is disabled in Mobile Phase 4. Use staging mode with a staging gateway URL.',
     };
   }
 
@@ -114,7 +114,7 @@ function buildConfig(): ApiConfig {
       environmentLabel: 'Unsafe environment blocked',
       status: 'blocked',
       statusMessage:
-        'Production SecurePay URL blocked by default. Set EXPO_PUBLIC_SECUREPAY_ALLOW_PRODUCTION_API=true only for approved testing. Phase 3 remains read-only.',
+        'Production SecurePay URL blocked by default. Set EXPO_PUBLIC_SECUREPAY_ALLOW_PRODUCTION_API=true only for approved testing. Phase 4 remains read-only.',
     };
   }
 
@@ -129,7 +129,7 @@ function buildConfig(): ApiConfig {
       environmentLabel: 'Unsafe environment blocked',
       status: 'blocked',
       statusMessage:
-        'API writes are disabled in Mobile Phase 3. EXPO_PUBLIC_SECUREPAY_ENABLE_API_WRITES is not honored.',
+        'API writes are disabled in Mobile Phase 4. EXPO_PUBLIC_SECUREPAY_ENABLE_API_WRITES is not honored.',
     };
   }
 
@@ -187,7 +187,7 @@ export function assertApiModeAllowed(): void {
   if (apiConfig.requestedMode === 'production') {
     throw new Error(
       apiConfig.statusMessage ??
-        'Production API access is disabled in Mobile Phase 3.',
+        'Production API access is disabled in Mobile Phase 4.',
     );
   }
 }

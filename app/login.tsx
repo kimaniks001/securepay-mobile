@@ -1,7 +1,14 @@
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 
+import {
+  canUseStagingLogin,
+  describeAuthFailure,
+  getAuthModeLabel,
+  getStagingAuthUnavailableMessage,
+} from '../src/api/authApi';
+import { isMockMode } from '../src/api/config';
 import { AppButton } from '../src/components/AppButton';
 import { Input } from '../src/components/Input';
 import { SafeNotice } from '../src/components/SafeNotice';
@@ -22,6 +29,17 @@ export default function LoginScreen() {
   const [errors, setErrors] = useState<{ email?: string; pin?: string }>({});
   const [submitting, setSubmitting] = useState(false);
 
+  const mockMode = isMockMode();
+  const stagingLoginReady = canUseStagingLogin();
+  const stagingUnavailable = getStagingAuthUnavailableMessage();
+  const authModeLabel = getAuthModeLabel();
+
+  const primaryButtonLabel = useMemo(() => {
+    if (submitting) return 'Signing in...';
+    if (mockMode) return 'Continue in demo mode';
+    return 'Sign in with staging credentials';
+  }, [mockMode, submitting]);
+
   async function handleSignIn() {
     const nextErrors: { email?: string; pin?: string } = {};
     if (!isValidEmail(email)) nextErrors.email = 'Enter a valid email address';
@@ -29,18 +47,34 @@ export default function LoginScreen() {
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
 
+    if (!mockMode && !stagingLoginReady) {
+      Alert.alert(
+        'Staging sign-in unavailable',
+        stagingUnavailable ?? 'Configure staging API environment before signing in.',
+      );
+      return;
+    }
+
     setSubmitting(true);
     try {
       await signIn(email, pin);
       router.replace('/(tabs)');
-    } catch {
-      Alert.alert('Sign in failed', 'Please try again.');
+    } catch (error) {
+      Alert.alert('Sign in failed', describeAuthFailure(error));
     } finally {
       setSubmitting(false);
     }
   }
 
   async function handleBiometricSignIn() {
+    if (!mockMode) {
+      Alert.alert(
+        'Biometrics unavailable in staging mode',
+        'Use staging credentials to sign in. Biometric unlock is for demo sessions only.',
+      );
+      return;
+    }
+
     const capability = await getBiometricCapability();
     if (!capability.isAvailable) {
       Alert.alert('Biometrics unavailable', 'Enable Face ID, Touch ID, or fingerprint on this device.');
@@ -52,6 +86,8 @@ export default function LoginScreen() {
     try {
       await signIn('demo@securepay.app', '1234');
       router.replace('/(tabs)');
+    } catch (error) {
+      Alert.alert('Sign in failed', describeAuthFailure(error));
     } finally {
       setSubmitting(false);
     }
@@ -64,6 +100,10 @@ export default function LoginScreen() {
       <Text style={styles.heroSubline}>{PUBLIC_SITE.heroSubline}</Text>
       <Text style={styles.demoBanner}>{PUBLIC_SITE.demoBanner}</Text>
       <Text style={styles.demoWarning}>{STAGING_DEMO_WARNING}</Text>
+      <Text style={styles.authMode}>{authModeLabel}</Text>
+      {!mockMode && stagingUnavailable ? (
+        <Text style={styles.stagingWarning}>{stagingUnavailable}</Text>
+      ) : null}
 
       <View style={styles.form}>
         <Input label="Email" autoCapitalize="none" keyboardType="email-address" value={email} onChangeText={setEmail} error={errors.email} />
@@ -72,8 +112,13 @@ export default function LoginScreen() {
 
       <View style={styles.actions}>
         <SafeNotice compact />
-        <AppButton label={submitting ? 'Signing in...' : 'Continue in demo mode'} disabled={submitting} onPress={handleSignIn} />
-        <AppButton label="Use biometrics" variant="secondary" disabled={submitting} onPress={handleBiometricSignIn} />
+        <Text style={styles.hint}>
+          Agreement-backed sign-in only. Not bank login. Not wallet activation.
+        </Text>
+        <AppButton label={primaryButtonLabel} disabled={submitting} onPress={handleSignIn} />
+        {mockMode ? (
+          <AppButton label="Use biometrics" variant="secondary" disabled={submitting} onPress={handleBiometricSignIn} />
+        ) : null}
       </View>
     </Screen>
   );
@@ -85,6 +130,9 @@ const styles = StyleSheet.create({
   heroSubline: { ...typography.body, color: colors.textSecondary, lineHeight: 22 },
   demoBanner: { ...typography.caption, color: colors.primary, fontWeight: '600' },
   demoWarning: { ...typography.caption, color: colors.warning, lineHeight: 18 },
+  authMode: { ...typography.caption, color: colors.textMuted, lineHeight: 18 },
+  stagingWarning: { ...typography.caption, color: colors.error, lineHeight: 18 },
+  hint: { ...typography.caption, color: colors.textMuted, lineHeight: 18 },
   form: { gap: spacing.lg },
   actions: { gap: spacing.sm },
 });

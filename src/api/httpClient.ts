@@ -5,7 +5,8 @@ import {
   mapHttpStatusToCategory,
   type ApiResult,
 } from './apiErrors';
-import { isForbiddenEndpoint } from './endpoints';
+import { isAllowedMobileRequest, isAuthEndpoint } from './endpoints';
+import { setLastApiError } from './lastApiError';
 import { getSession } from './sessionStorage';
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
@@ -33,25 +34,43 @@ function extractRequestId(headers: Headers): string | undefined {
   );
 }
 
+function recordError<T>(result: ApiResult<T>): ApiResult<T> {
+  if (!result.ok) {
+    setLastApiError(result.error);
+  }
+  return result;
+}
+
 export async function httpGet<T>(path: string): Promise<ApiResult<T>> {
-  return httpRequest<T>(path, { method: 'GET' });
+  return recordError(await httpRequest<T>(path, { method: 'GET' }));
+}
+
+export async function httpPostAuth<T>(path: string, body: unknown): Promise<ApiResult<T>> {
+  return recordError(
+    await httpRequest<T>(path, {
+      method: 'POST',
+      body,
+      headers: { 'Content-Type': 'application/json' },
+    }),
+  );
 }
 
 export async function httpRequest<T>(path: string, options: RequestOptions = {}): Promise<ApiResult<T>> {
   assertApiModeAllowed();
 
-  if (isForbiddenEndpoint(path)) {
+  const method = options.method ?? 'GET';
+
+  if (!isAllowedMobileRequest(path, method)) {
     return apiFailure(
       'unsupported_action',
       'This action is controlled by SecurePay backend and is not available from the mobile app.',
     );
   }
 
-  const method = options.method ?? 'GET';
-  if (method !== 'GET') {
+  if (method !== 'GET' && !(method === 'POST' && isAuthEndpoint(path))) {
     return apiFailure(
       'unsupported_action',
-      'API writes are disabled in Mobile Phase 3. Only read-only GET requests are allowed.',
+      'API writes are disabled in Mobile Phase 4 except safe auth/session calls.',
     );
   }
 
@@ -82,6 +101,7 @@ export async function httpRequest<T>(path: string, options: RequestOptions = {})
     const response = await fetch(url, {
       method,
       headers,
+      body: options.body ? JSON.stringify(options.body) : undefined,
       signal: controller.signal,
     });
 

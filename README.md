@@ -12,8 +12,9 @@ Cross-platform mobile client for SecurePay, built with **Expo SDK 57** and **Rea
 | **2 (merged)** | Doctrine alignment, API adapter, mock SecureLinks, readiness screens, safe copy |
 | **2B** | Bolt UI alignment — theme, components, journeys, navigation labels |
 | **2C-Lite (merged)** | Public site look-and-feel — [securepay.securepay4businessdemo.live](https://securepay.securepay4businessdemo.live/) |
-| **3 (current)** | Staging read-only API Gateway integration |
-| **4 (next)** | Authenticated staging writes, production hardening, app store release |
+| **3 (merged)** | Staging read-only API Gateway integration |
+| **4 (current)** | Staging API contract + auth session foundation |
+| **5 (next)** | Confirmed contract, draft writes, production readiness gate |
 
 ## Phase 2 — Doctrine alignment
 
@@ -114,6 +115,43 @@ EXPO_PUBLIC_SECUREPAY_ALLOW_PRODUCTION_API=false
 ### Cloud Agent / secrets warning
 
 Do **not** provide Cloud Agents with production tokens, staging internal tokens, Choice Bank credentials, database credentials, customer data, real `.env` files, `INTERNAL_TOKEN`, or provider secrets. Use placeholders only.
+
+## Phase 4 — Staging API contract and auth session foundation
+
+Phase 4 documents the assumed SecurePay staging API contract, adds safe auth/session support, and hardens DTO mapping — **still read-only for money state**.
+
+### What Phase 4 adds
+
+- `docs/MOBILE_PHASE_4_STAGING_API_CONTRACT_AUTH_SESSION_FOUNDATION.md`
+- `docs/MOBILE_STAGING_API_CONTRACT_CHECKLIST.md` — backend route confirmation checklist
+- `src/api/authApi.ts` — demo login (mock) + staging login placeholder
+- `src/api/contractSelfCheck.ts` — runtime contract verification
+- `src/api/endpoints.ts` — categorized: public, authenticated, auth, future, forbidden
+- Enhanced `sessionStorage.ts` — rejects INTERNAL_TOKEN, webhook secrets, provider credentials
+- Enhanced `mappers.ts` — `collection_payment_ready_readiness`, minor amount units, nested DTOs
+- Account screen **API contract status** section
+- Login screen — demo mode vs staging credentials (not bank login)
+
+### Auth / session rules
+
+- Tokens stored only in **expo-secure-store** (never AsyncStorage)
+- No INTERNAL_TOKEN, provider secrets, or production credentials on device
+- Logout clears all session storage
+- Staging auth: `POST /api/v1/auth/mobile/login` (**assumed** — confirm against Securepaymain)
+
+### Prepare staging mode safely
+
+1. Create `.env.local` with approved staging gateway URL (not `securepay.ke` production).
+2. Set `EXPO_PUBLIC_SECUREPAY_API_MODE=staging`.
+3. Sign in with staging credentials on the Login screen.
+4. Check Account → **API contract status** → **Refresh contract status**.
+5. Use `docs/MOBILE_STAGING_API_CONTRACT_CHECKLIST.md` to confirm routes with backend team.
+
+### All money actions remain disabled
+
+- No payment success, withdrawal, release, payout, or ledger posting from mobile
+- Auth POST is the only non-GET HTTP allowed
+- SecurePay API Gateway is the only integration path
 
 ## What this app does NOT do
 

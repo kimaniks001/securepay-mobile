@@ -1,6 +1,8 @@
 import { useRouter } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { getContractStatusForDisplay } from '../../src/api/contractSelfCheck';
 import { AppButton } from '../../src/components/AppButton';
 import { ApiStatePanel } from '../../src/components/ApiStatePanel';
 import { AppCard } from '../../src/components/AppCard';
@@ -16,12 +18,24 @@ import { useAuth } from '../../src/hooks/useAuth';
 import { useAccountReadiness, useKSNumberProfile } from '../../src/hooks/useSecurePayApi';
 import { getBiometricCapability } from '../../src/services/biometrics';
 
+type ContractDisplay = Awaited<ReturnType<typeof getContractStatusForDisplay>>;
+
 export default function AccountScreen() {
   const router = useRouter();
   const { user, signOut } = useAuth();
   const profile = useKSNumberProfile();
   const readiness = useAccountReadiness();
   const apiEnvironment = useApiEnvironment();
+  const [contractStatus, setContractStatus] = useState<ContractDisplay | null>(null);
+
+  const refreshContractStatus = useCallback(async () => {
+    const status = await getContractStatusForDisplay();
+    setContractStatus(status);
+  }, []);
+
+  useEffect(() => {
+    refreshContractStatus();
+  }, [refreshContractStatus]);
 
   async function showSecurityStatus() {
     const capability = await getBiometricCapability();
@@ -52,6 +66,29 @@ export default function AccountScreen() {
         <EnvironmentBanner />
 
         <SafeNotice compact />
+
+        <AppCard title="API contract status" subtitle="Mobile reads from SecurePay API Gateway">
+          <Text style={styles.contractIntro}>
+            Mobile reads from SecurePay API Gateway. Money actions remain backend-controlled and disabled on mobile.
+          </Text>
+          {contractStatus ? (
+            <>
+              <InfoRow label="API mode" value={contractStatus.mode} />
+              <InfoRow label="Base URL" value={contractStatus.baseUrlMasked} />
+              <InfoRow label="Production blocked" value={contractStatus.productionBlocked ? 'Yes' : 'No'} />
+              <InfoRow label="Writes disabled" value={contractStatus.writesDisabled ? 'Yes' : 'No'} />
+              <InfoRow label="Session stored" value={contractStatus.sessionStored ? 'Yes' : 'No'} />
+              <InfoRow label="Forbidden endpoints protected" value={contractStatus.forbiddenProtected ? 'Yes' : 'No'} />
+              {contractStatus.lastApiError ? (
+                <InfoRow label="Last API error" value={contractStatus.lastApiError} />
+              ) : null}
+              <Text style={styles.contractSummary}>{contractStatus.summary}</Text>
+            </>
+          ) : (
+            <Text style={styles.body}>Checking API contract status…</Text>
+          )}
+          <AppButton label="Refresh contract status" variant="ghost" onPress={refreshContractStatus} />
+        </AppCard>
 
         <AppCard title={user?.name ?? 'SecurePay user'} subtitle={user?.email}>
           <InfoRow label="KSNumber" value={profile.data?.ksNumber ?? user?.ksNumber ?? 'Placeholder'} />
@@ -105,7 +142,7 @@ export default function AccountScreen() {
         </AppCard>
 
         <AppCard title="Device security">
-          <InfoRow label="Biometric login" value="Available when enrolled" />
+          <InfoRow label="Biometric login" value="Available when enrolled (demo only)" />
           <InfoRow label="Secure storage" value="Expo SecureStore" />
           <InfoRow label="API mode" value={apiEnvironment.environmentLabel} />
         </AppCard>
@@ -140,6 +177,18 @@ const styles = StyleSheet.create({
     color: colors.warning,
     lineHeight: 18,
   },
+  contractIntro: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    lineHeight: 18,
+    marginBottom: spacing.sm,
+  },
+  contractSummary: {
+    ...typography.caption,
+    color: colors.primary,
+    lineHeight: 18,
+    marginTop: spacing.xs,
+  },
   body: {
     ...typography.caption,
     color: colors.textSecondary,
@@ -154,13 +203,14 @@ const styles = StyleSheet.create({
   infoLabel: {
     ...typography.caption,
     color: colors.textMuted,
+    flex: 1,
   },
   infoValue: {
     ...typography.caption,
     color: colors.text,
     flexShrink: 1,
     textAlign: 'right',
-    textTransform: 'capitalize',
+    flex: 1,
   },
   actions: {
     gap: spacing.sm,

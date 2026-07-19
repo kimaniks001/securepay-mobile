@@ -10,27 +10,65 @@ export type MobileSession = {
   ksNumber?: string;
   displayName?: string;
   email?: string;
+  authMode?: 'demo' | 'staging';
 };
 
-const FORBIDDEN_SESSION_KEYS = [
-  'internal_token',
-  'internalToken',
-  'choice',
-  'provider',
-  'bank',
-  'mpesa',
-  'pesalink',
-  'stripe',
-  'supabase',
-  'ledger',
+const FORBIDDEN_SESSION_KEY_PATTERNS = [
+  /internal[_-]?token/i,
+  /choice/i,
+  /provider[_-]?secret/i,
+  /provider[_-]?credential/i,
+  /database[_-]?credential/i,
+  /bank[_-]?credential/i,
+  /webhook[_-]?secret/i,
+  /production[_-]?secret/i,
+  /mpesa/i,
+  /pesalink/i,
+  /stripe/i,
+  /supabase/i,
+  /ledger[_-]?secret/i,
+  /daraja/i,
+  /2c2p/i,
 ] as const;
 
-function assertSafeSessionPayload(session: MobileSession): void {
-  const serialized = JSON.stringify(session).toLowerCase();
-  for (const forbidden of FORBIDDEN_SESSION_KEYS) {
-    if (serialized.includes(forbidden)) {
+const FORBIDDEN_VALUE_PATTERNS = [
+  /INTERNAL_TOKEN/i,
+  /sk_live_/i,
+  /sk_test_/i,
+  /Bearer\s+eyJ[a-zA-Z0-9_-]{20,}\.[a-zA-Z0-9_-]{20,}/,
+] as const;
+
+function assertSafeSessionKey(key: string): void {
+  for (const pattern of FORBIDDEN_SESSION_KEY_PATTERNS) {
+    if (pattern.test(key)) {
+      throw new Error(`Forbidden session key cannot be stored on device: ${key}`);
+    }
+  }
+}
+
+function assertSafeSessionValue(value: unknown): void {
+  if (value === null || value === undefined) return;
+  const serialized = String(value);
+  for (const pattern of FORBIDDEN_VALUE_PATTERNS) {
+    if (pattern.test(serialized)) {
+      throw new Error('Forbidden session value pattern cannot be stored on device.');
+    }
+  }
+  for (const pattern of FORBIDDEN_SESSION_KEY_PATTERNS) {
+    if (pattern.test(serialized)) {
       throw new Error('Forbidden session metadata cannot be stored on device.');
     }
+  }
+}
+
+function assertSafeSessionPayload(session: MobileSession): void {
+  for (const [key, value] of Object.entries(session)) {
+    assertSafeSessionKey(key);
+    assertSafeSessionValue(value);
+  }
+  const serialized = JSON.stringify(session).toLowerCase();
+  if (serialized.includes('internal_token') || serialized.includes('webhook_secret')) {
+    throw new Error('Forbidden session metadata cannot be stored on device.');
   }
 }
 
@@ -45,7 +83,9 @@ export async function getSession(): Promise<MobileSession | null> {
   const raw = await SecureStore.getItemAsync(SESSION_KEY);
   if (!raw) return null;
   try {
-    return JSON.parse(raw) as MobileSession;
+    const parsed = JSON.parse(raw) as MobileSession;
+    assertSafeSessionPayload(parsed);
+    return parsed;
   } catch {
     return null;
   }
@@ -58,4 +98,21 @@ export async function clearSession(): Promise<void> {
 export async function hasSession(): Promise<boolean> {
   const session = await getSession();
   return Boolean(session?.accessToken || session?.userId);
+}
+
+export function validateSessionStorageSafety(): { ok: boolean; message: string } {
+  try {
+    assertSafeSessionPayload({
+      accessToken: 'demo-safe-token',
+      email: 'demo@securepay.app',
+      authMode: 'demo',
+    });
+    assertSafeSessionKey('accessToken');
+    return { ok: true, message: 'Session storage safeguards active' };
+  } catch (error) {
+    return {
+      ok: false,
+      message: error instanceof Error ? error.message : 'Session storage validation failed',
+    };
+  }
 }
