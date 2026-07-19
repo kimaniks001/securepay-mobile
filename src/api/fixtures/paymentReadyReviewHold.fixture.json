@@ -1,0 +1,5 @@
+{
+  "status": "payment_ready_readiness",
+  "review_hold": "active",
+  "settlement_readiness": "ready_for_staging_review"
+}

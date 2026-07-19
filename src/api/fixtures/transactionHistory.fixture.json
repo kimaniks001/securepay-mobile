@@ -1,0 +1,19 @@
+{
+  "data": [
+    {
+      "id": "txn_fixture_001",
+      "activity_label": "payment_initiated",
+      "money_state": "pending"
+    },
+    {
+      "id": "txn_fixture_002",
+      "activity_label": "failed",
+      "money_state": "failed"
+    },
+    {
+      "id": "txn_fixture_003",
+      "activityLabel": "reversed",
+      "moneyState": "reversed"
+    }
+  ]
+}

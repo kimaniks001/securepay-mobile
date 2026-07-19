@@ -1,0 +1,10 @@
+{
+  "items": [
+    {
+      "id": "ev_fixture_001",
+      "label": "Agreement document",
+      "kind": "document",
+      "status": "submitted"
+    }
+  ]
+}

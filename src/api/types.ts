@@ -125,6 +125,21 @@ export type ApiUser = {
   ksNumber: string;
 };
 
+/** Read-only evidence item — display only; endpoint contract assumed/missing in Phase 5. */
+export type SecureLinkEvidenceItem = {
+  id: string;
+  label: string;
+  kind: string;
+  status: string;
+  submittedAt?: string;
+  note?: string;
+};
+
+export type SecureLinkEvidenceList = {
+  items: SecureLinkEvidenceItem[];
+  secureLinkSlug?: string;
+};
+
 /** Backend DTO shapes — snake_case and camelCase variants (contract assumptions). */
 export type BackendPaymentReadyReadinessDto = {
   status?: string;

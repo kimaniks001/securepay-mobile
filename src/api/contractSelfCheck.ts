@@ -1,5 +1,5 @@
 import { apiConfig, getEnvironmentLabel, isApiEnvironmentReady, isMockMode, isProductionModeEnabled, isStagingMode } from './config';
-import { forbiddenInternalEndpoints, forbiddenMoneyActionEndpoints, isForbiddenEndpoint } from './endpoints';
+import { forbiddenInternalEndpoints, forbiddenMoneyActionEndpoints, getAssumedEndpointCount, getConfirmedEndpointCount, isForbiddenEndpoint } from './endpoints';
 import { getLastApiErrorMessage } from './lastApiError';
 import { guardMobileAction } from './mobileActionGuards';
 import { getSession, hasSession, validateSessionStorageSafety } from './sessionStorage';
@@ -37,6 +37,23 @@ export async function runContractSelfCheck(): Promise<ContractSelfCheckResult> {
     label: 'API mode',
     status: 'pass',
     detail: `${getEnvironmentLabel()} (requested: ${apiConfig.requestedMode})`,
+  });
+
+  items.push({
+    id: 'confirmed_endpoints',
+    label: 'Confirmed endpoints',
+    status: getConfirmedEndpointCount() > 0 ? 'pass' : 'warn',
+    detail:
+      getConfirmedEndpointCount() > 0
+        ? `${getConfirmedEndpointCount()} confirmed from Securepaymain`
+        : '0 confirmed — Securepaymain source not available locally (Phase 5)',
+  });
+
+  items.push({
+    id: 'assumed_endpoints',
+    label: 'Assumed endpoints',
+    status: 'warn',
+    detail: `${getAssumedEndpointCount()} routes remain assumed until backend verification`,
   });
 
   items.push({

@@ -5,6 +5,7 @@ import { httpGet } from './httpClient';
 import {
   mapAccountReadiness,
   mapApiUser,
+  mapEvidenceList,
   mapGroupSecureLinkDetail,
   mapKSNumberProfile,
   mapPaymentReadyReadinessDto,
@@ -30,6 +31,7 @@ import type {
   SecureLinkDetail,
   SecureLinkSummary,
   SecurePayTransaction,
+  SecureLinkEvidenceList,
 } from './types';
 
 async function withStagingFallback<T>(
@@ -126,6 +128,20 @@ export async function stagingGetTransactionHistory(): Promise<SecurePayTransacti
   return withStagingFallback(
     () => fetchJson(gatewayEndpoints.transactionHistory, mapTransactionHistory),
     mockGetTransactionHistory,
+  );
+}
+
+/**
+ * Read-only evidence list — endpoint contract assumed/missing in Phase 5.
+ * Not wired in UI until confirmed against Securepaymain.
+ */
+export async function stagingGetSecureLinkEvidence(slug: string): Promise<SecureLinkEvidenceList> {
+  return withStagingFallback(
+    () =>
+      fetchJson(gatewayEndpoints.secureLinkEvidence(slug), (raw) =>
+        mapEvidenceList(raw, slug),
+      ),
+    async () => ({ items: [], secureLinkSlug: slug }),
   );
 }
 
