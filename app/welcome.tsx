@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '../src/components/Button';
 import { Screen } from '../src/components/Screen';
+import { BRAND, STAGING_DEMO_WARNING } from '../src/doctrine/securepayDoctrine';
 import { colors, spacing, typography } from '../src/constants/theme';
 
 export default function WelcomeScreen() {
@@ -12,28 +13,27 @@ export default function WelcomeScreen() {
     <Screen style={styles.screen}>
       <View style={styles.hero}>
         <View style={styles.badge}>
-          <Text style={styles.badgeText}>Phase 1</Text>
+          <Text style={styles.badgeText}>Phase 2 · Demo</Text>
         </View>
-        <Text style={styles.title}>SecurePay</Text>
+        <Text style={styles.brandLine}>{BRAND.byline}</Text>
+        <Text style={styles.title}>{BRAND.name}</Text>
+        <Text style={styles.coreLine}>{BRAND.coreLine}</Text>
         <Text style={styles.subtitle}>
-          Send money securely with biometric protection, encrypted storage, and a modern mobile
-          experience.
+          Agreement-backed SecureLinks for Kenyan groups and businesses. Quiet trust, mobile-first,
+          with backend as the source of truth.
         </Text>
+        <Text style={styles.demoWarning}>{STAGING_DEMO_WARNING}</Text>
       </View>
 
       <View style={styles.features}>
-        <FeatureItem title="Bank-grade security" detail="Tokens stored in the device keychain" />
-        <FeatureItem title="Fast transfers" detail="Pay people and businesses in seconds" />
-        <FeatureItem title="Full visibility" detail="Track every transaction in one place" />
+        <FeatureItem title="SecureLink" detail="Create agreement-backed payment requests safely" />
+        <FeatureItem title="Group SecureLink" detail="Welfare, general, and business group flows" />
+        <FeatureItem title="Provider-confirmed" detail="Money state comes from SecurePay backend only" />
       </View>
 
       <View style={styles.actions}>
         <Button label="Get Started" onPress={() => router.push('/login')} />
-        <Button
-          label="Learn More"
-          variant="ghost"
-          onPress={() => router.push('/login')}
-        />
+        <Button label="View SecureLinks" variant="secondary" onPress={() => router.push('/login')} />
       </View>
     </Screen>
   );
@@ -72,15 +72,31 @@ const styles = StyleSheet.create({
     color: colors.accent,
     fontWeight: '600',
   },
+  brandLine: {
+    ...typography.caption,
+    color: colors.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
   title: {
     ...typography.title,
     color: colors.text,
     fontSize: 40,
   },
+  coreLine: {
+    ...typography.heading,
+    color: colors.primary,
+    fontSize: 18,
+  },
   subtitle: {
     ...typography.body,
     color: colors.textSecondary,
     lineHeight: 24,
+  },
+  demoWarning: {
+    ...typography.caption,
+    color: colors.warning,
+    lineHeight: 18,
   },
   features: {
     gap: spacing.md,

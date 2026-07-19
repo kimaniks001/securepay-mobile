@@ -38,17 +38,24 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="securelinks"
+        options={{
+          title: 'SecureLinks',
+          tabBarLabel: 'Links',
+        }}
+      />
+      <Tabs.Screen
         name="pay"
         options={{
-          title: 'Pay',
-          tabBarLabel: 'Pay',
+          title: 'Actions',
+          tabBarLabel: 'Actions',
         }}
       />
       <Tabs.Screen
         name="history"
         options={{
-          title: 'History',
-          tabBarLabel: 'History',
+          title: 'Activity',
+          tabBarLabel: 'Activity',
         }}
       />
       <Tabs.Screen

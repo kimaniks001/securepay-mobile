@@ -4,7 +4,9 @@ import { Alert, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '../src/components/Button';
 import { Input } from '../src/components/Input';
+import { SafeNotice } from '../src/components/SafeNotice';
 import { Screen } from '../src/components/Screen';
+import { STAGING_DEMO_WARNING } from '../src/doctrine/securepayDoctrine';
 import { colors, spacing, typography } from '../src/constants/theme';
 import { useAuth } from '../src/hooks/useAuth';
 import { authenticateWithBiometrics, getBiometricCapability } from '../src/services/biometrics';
@@ -54,7 +56,7 @@ export default function LoginScreen() {
       return;
     }
 
-    const authenticated = await authenticateWithBiometrics('Sign in to SecurePay');
+    const authenticated = await authenticateWithBiometrics('Unlock SecurePay demo session');
     if (!authenticated) {
       return;
     }
@@ -72,7 +74,8 @@ export default function LoginScreen() {
     <Screen style={styles.screen}>
       <View style={styles.header}>
         <Text style={styles.title}>Welcome back</Text>
-        <Text style={styles.subtitle}>Sign in to access your SecurePay wallet.</Text>
+        <Text style={styles.subtitle}>Sign in to your demo SecurePay session.</Text>
+        <Text style={styles.demoWarning}>{STAGING_DEMO_WARNING}</Text>
       </View>
 
       <View style={styles.form}>
@@ -97,6 +100,7 @@ export default function LoginScreen() {
       </View>
 
       <View style={styles.actions}>
+        <SafeNotice compact />
         <Button label={submitting ? 'Signing in...' : 'Sign In'} disabled={submitting} onPress={handleSignIn} />
         <Button
           label="Use Biometrics"
@@ -104,7 +108,7 @@ export default function LoginScreen() {
           disabled={submitting}
           onPress={handleBiometricSignIn}
         />
-        <Text style={styles.hint}>Demo PIN: any 4–6 digit code works in Phase 1.</Text>
+        <Text style={styles.hint}>Demo PIN: any 4–6 digit code. No live money movement.</Text>
       </View>
     </Screen>
   );
@@ -126,6 +130,11 @@ const styles = StyleSheet.create({
   subtitle: {
     ...typography.body,
     color: colors.textSecondary,
+  },
+  demoWarning: {
+    ...typography.caption,
+    color: colors.warning,
+    lineHeight: 18,
   },
   form: {
     gap: spacing.lg,
