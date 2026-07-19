@@ -1,6 +1,27 @@
 import * as SecureStore from 'expo-secure-store';
+import { Platform } from 'react-native';
 
 const SESSION_KEY = 'securepay_mobile_session_v1';
+
+// Web fallback using localStorage
+const webStorage = {
+  setItem: async (key: string, value: string): Promise<void> => {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.setItem(key, value);
+    }
+  },
+  getItem: async (key: string): Promise<string | null> => {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      return window.localStorage.getItem(key);
+    }
+    return null;
+  },
+  deleteItem: async (key: string): Promise<void> => {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.removeItem(key);
+    }
+  },
+};
 
 export type MobileSession = {
   accessToken?: string;
@@ -74,13 +95,19 @@ function assertSafeSessionPayload(session: MobileSession): void {
 
 export async function saveSession(session: MobileSession): Promise<void> {
   assertSafeSessionPayload(session);
-  await SecureStore.setItemAsync(SESSION_KEY, JSON.stringify(session), {
-    keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
-  });
+  if (Platform.OS === 'web') {
+    await webStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  } else {
+    await SecureStore.setItemAsync(SESSION_KEY, JSON.stringify(session), {
+      keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+    });
+  }
 }
 
 export async function getSession(): Promise<MobileSession | null> {
-  const raw = await SecureStore.getItemAsync(SESSION_KEY);
+  const raw = Platform.OS === 'web' 
+    ? await webStorage.getItem(SESSION_KEY)
+    : await SecureStore.getItemAsync(SESSION_KEY);
   if (!raw) return null;
   try {
     const parsed = JSON.parse(raw) as MobileSession;
@@ -92,7 +119,11 @@ export async function getSession(): Promise<MobileSession | null> {
 }
 
 export async function clearSession(): Promise<void> {
-  await SecureStore.deleteItemAsync(SESSION_KEY);
+  if (Platform.OS === 'web') {
+    await webStorage.deleteItem(SESSION_KEY);
+  } else {
+    await SecureStore.deleteItemAsync(SESSION_KEY);
+  }
 }
 
 export async function hasSession(): Promise<boolean> {
