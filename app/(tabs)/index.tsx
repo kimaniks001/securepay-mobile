@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { AgreementFlowCard } from '../../src/components/AgreementFlowCard';
 import { AppButton } from '../../src/components/AppButton';
 import { AppCard } from '../../src/components/AppCard';
 import { MoneyStateCard } from '../../src/components/MoneyStateCard';
@@ -8,7 +9,7 @@ import { ReadinessPanel } from '../../src/components/ReadinessPanel';
 import { SafeNotice } from '../../src/components/SafeNotice';
 import { Screen } from '../../src/components/Screen';
 import { ScreenHeader } from '../../src/components/ScreenHeader';
-import { safeMoneyStateLabels } from '../../src/doctrine/securepayDoctrine';
+import { BRAND, safeMoneyStateLabels } from '../../src/doctrine/securepayDoctrine';
 import { colors, spacing, typography } from '../../src/theme';
 import { useAuth } from '../../src/hooks/useAuth';
 import {
@@ -39,9 +40,9 @@ export default function HomeScreen() {
     <Screen>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <ScreenHeader
-          eyebrow="SecurePay dashboard"
+          eyebrow={BRAND.siteName}
           title={`Hello, ${user?.name.split(' ')[0] ?? 'there'}`}
-          subtitle="Agreement overview · demo / staging"
+          subtitle={`${BRAND.coreLine} · demo / staging`}
         />
 
         <SafeNotice message="This mobile build does not confirm payments, release money, withdraw funds, or move money directly." />
@@ -103,6 +104,8 @@ export default function HomeScreen() {
         ) : (
           <ActivityIndicator color={colors.primary} />
         )}
+
+        <AgreementFlowCard subtitle="Aligned with the public SecurePay site — mobile shows readiness only." />
 
         <View style={styles.actions}>
           <AppButton label="Create SecureLink" onPress={() => router.push('/securelink/create')} />

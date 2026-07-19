@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 
+import { BRAND } from '../doctrine/securepayDoctrine';
 import { colors, radius, spacing, typography } from '../theme';
 
 type SecurePayLogoMarkProps = {
@@ -18,13 +19,13 @@ export function SecurePayLogoMark({ size = 'md', showWordmark = true }: SecurePa
 
   return (
     <View style={styles.container}>
-      <View style={[styles.mark, { width: dimension, height: dimension, borderRadius: dimension / 4 }]}>
-        <Text style={[styles.markText, { fontSize: dimension * 0.34 }]}>SP</Text>
+      <View style={[styles.mark, { width: dimension, height: dimension, borderRadius: radius.md }]}>
+        <Text style={[styles.markText, { fontSize: dimension * 0.3 }]}>SP</Text>
       </View>
       {showWordmark ? (
         <View>
-          <Text style={styles.wordmark}>SecurePay</Text>
-          <Text style={styles.byline}>by Keyman</Text>
+          <Text style={styles.wordmark}>{BRAND.siteName}</Text>
+          <Text style={styles.byline}>{BRAND.byline}</Text>
         </View>
       ) : null}
     </View>
@@ -49,6 +50,7 @@ const styles = StyleSheet.create({
   wordmark: {
     ...typography.heading,
     color: colors.text,
+    fontSize: 22,
   },
   byline: {
     ...typography.caption,

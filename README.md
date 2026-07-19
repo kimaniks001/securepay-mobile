@@ -10,8 +10,9 @@ Cross-platform mobile client for SecurePay, built with **Expo SDK 57** and **Rea
 | --- | --- |
 | **1 (merged)** | Expo shell, Welcome/Login/Home/Pay/History/Profile, secure storage, biometrics, mock balance |
 | **2 (merged)** | Doctrine alignment, API adapter, mock SecureLinks, readiness screens, safe copy |
-| **2B (current)** | Bolt web UI alignment — theme, components, journeys, navigation labels |
-| **3 (next)** | Live SecurePay API Gateway integration (staging), authenticated API calls, sync |
+| **2B** | Bolt UI alignment — theme, components, journeys, navigation labels |
+| **2C-Lite (current)** | Public site look-and-feel — [securepay.securepay4businessdemo.live](https://securepay.securepay4businessdemo.live/) |
+| **3 (next)** | Live SecurePay API Gateway integration (staging) |
 | **4** | Production hardening, audit, app store release |
 
 ## Phase 2 — Doctrine alignment
@@ -53,6 +54,31 @@ Mobile now aligns to the **Bolt web UI** (`kimaniks001/Ulyamwisho`) as the visua
 - No real payments, withdrawal, release, or payout
 - No direct provider integration (Stripe, 2C2P, M-Pesa, PesaLink, Choice Bank, Supabase, ledger)
 - Backend remains the source of truth
+
+## Phase 2C-Lite — Public site look-and-feel alignment
+
+Mobile aligns to the **public SecurePay site** as visual and tone reference:
+
+**https://securepay.securepay4businessdemo.live/**
+
+### What Phase 2C-Lite adds
+
+- `docs/MOBILE_PHASE_2C_LITE_PUBLIC_SITE_ALIGNMENT.md`
+- `src/doctrine/publicSiteReference.ts` — public site copy and safe readiness labels
+- Refined `src/theme/` tokens (warmer white, trust green, orange CTA)
+- `AgreementFlowCard` — four-step agreement flow (safe mobile labels)
+- Welcome/Home copy aligned to SecurePay.ke public identity
+- Journey tone updates — agreement-first, trust-first, simple Kenyan mobile
+
+### Not pixel-perfect
+
+Public site is the reference until the Bolt repo (`securepaymain`) is available for Phase 2D local sync.
+
+### Still mock / staging only
+
+- No real payments, withdrawal, release, or payout
+- No direct provider integrations
+- Backend remains source of truth
 
 ## What this app does NOT do
 

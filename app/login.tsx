@@ -6,9 +6,9 @@ import { AppButton } from '../src/components/AppButton';
 import { Input } from '../src/components/Input';
 import { SafeNotice } from '../src/components/SafeNotice';
 import { Screen } from '../src/components/Screen';
-import { ScreenHeader } from '../src/components/ScreenHeader';
 import { SecurePayLogoMark } from '../src/components/SecurePayLogoMark';
 import { BRAND, STAGING_DEMO_WARNING } from '../src/doctrine/securepayDoctrine';
+import { PUBLIC_SITE } from '../src/doctrine/publicSiteReference';
 import { colors, spacing, typography } from '../src/theme';
 import { useAuth } from '../src/hooks/useAuth';
 import { authenticateWithBiometrics, getBiometricCapability } from '../src/services/biometrics';
@@ -24,18 +24,10 @@ export default function LoginScreen() {
 
   async function handleSignIn() {
     const nextErrors: { email?: string; pin?: string } = {};
-
-    if (!isValidEmail(email)) {
-      nextErrors.email = 'Enter a valid email address';
-    }
-    if (!isValidPin(pin)) {
-      nextErrors.pin = 'PIN must be 4–6 digits';
-    }
-
+    if (!isValidEmail(email)) nextErrors.email = 'Enter a valid email address';
+    if (!isValidPin(pin)) nextErrors.pin = 'PIN must be 4–6 digits';
     setErrors(nextErrors);
-    if (Object.keys(nextErrors).length > 0) {
-      return;
-    }
+    if (Object.keys(nextErrors).length > 0) return;
 
     setSubmitting(true);
     try {
@@ -51,16 +43,11 @@ export default function LoginScreen() {
   async function handleBiometricSignIn() {
     const capability = await getBiometricCapability();
     if (!capability.isAvailable) {
-      Alert.alert(
-        'Biometrics unavailable',
-        'Enable Face ID, Touch ID, or fingerprint unlock on this device.',
-      );
+      Alert.alert('Biometrics unavailable', 'Enable Face ID, Touch ID, or fingerprint on this device.');
       return;
     }
-
     const authenticated = await authenticateWithBiometrics('Unlock SecurePay demo session');
     if (!authenticated) return;
-
     setSubmitting(true);
     try {
       await signIn('demo@securepay.app', '1234');
@@ -73,8 +60,9 @@ export default function LoginScreen() {
   return (
     <Screen style={styles.screen}>
       <SecurePayLogoMark size="md" />
-      <ScreenHeader title="Continue in demo mode" subtitle="Sign in to explore SecurePay on mobile." />
       <Text style={styles.coreLine}>{BRAND.coreLine}</Text>
+      <Text style={styles.heroSubline}>{PUBLIC_SITE.heroSubline}</Text>
+      <Text style={styles.demoBanner}>{PUBLIC_SITE.demoBanner}</Text>
       <Text style={styles.demoWarning}>{STAGING_DEMO_WARNING}</Text>
 
       <View style={styles.form}>
@@ -86,17 +74,17 @@ export default function LoginScreen() {
         <SafeNotice compact />
         <AppButton label={submitting ? 'Signing in...' : 'Continue in demo mode'} disabled={submitting} onPress={handleSignIn} />
         <AppButton label="Use biometrics" variant="secondary" disabled={submitting} onPress={handleBiometricSignIn} />
-        <Text style={styles.hint}>Demo PIN: any 4–6 digits. No live money movement.</Text>
       </View>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { justifyContent: 'space-between', paddingVertical: spacing.xl, gap: spacing.lg },
-  coreLine: { ...typography.heading, color: colors.primary, fontSize: 17 },
+  screen: { justifyContent: 'space-between', paddingVertical: spacing.xl, gap: spacing.md },
+  coreLine: { ...typography.heading, color: colors.primary, fontSize: 18 },
+  heroSubline: { ...typography.body, color: colors.textSecondary, lineHeight: 22 },
+  demoBanner: { ...typography.caption, color: colors.primary, fontWeight: '600' },
   demoWarning: { ...typography.caption, color: colors.warning, lineHeight: 18 },
   form: { gap: spacing.lg },
   actions: { gap: spacing.sm },
-  hint: { ...typography.caption, color: colors.textMuted, textAlign: 'center' },
 });

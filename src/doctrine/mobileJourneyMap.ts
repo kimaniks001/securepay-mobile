@@ -39,27 +39,27 @@ export const secureLinkCreateJourney: MobileJourney = {
     {
       id: 'agreement',
       label: 'Agreement',
-      explanation: 'Title, purpose, and agreement-controlled amount.',
+      explanation: 'What is being paid for, how much, and by when — both sides see the same terms.',
     },
     {
       id: 'parties',
       label: 'Parties',
-      explanation: 'Creator KSNumber and other party placeholder.',
+      explanation: 'Creator KSNumber and the other party. Simple and clear.',
     },
     {
       id: 'conditions',
       label: 'Conditions',
-      explanation: 'Release conditions, evidence, and deadline placeholder.',
+      explanation: 'Agreement conditions, evidence, and deadline. Trust-first, no technical overload.',
     },
     {
       id: 'preview',
       label: 'Preview',
-      explanation: 'Review draft summary. Draft only in Phase 2B.',
+      explanation: 'Review your draft summary. Draft only — like the public site demo.',
     },
     {
       id: 'share',
       label: 'Share placeholder',
-      explanation: 'Sharing is disabled in demo. Backend submission required later.',
+      explanation: 'Sharing disabled in mobile demo. Backend handles live links later.',
     },
   ],
 };
@@ -71,12 +71,12 @@ export const groupSecureLinkCreateJourney: MobileJourney = {
     {
       id: 'purpose',
       label: 'Purpose',
-      explanation: 'Describe the group agreement and contribution goal.',
+      explanation: 'Describe the group purpose — chama, welfare, school fees, estate levies.',
     },
     {
       id: 'category',
       label: 'Category',
-      explanation: 'Welfare, General, or Business solution with fee doctrine.',
+      explanation: 'Welfare, General, or Business solution. Fee doctrine shown clearly.',
     },
     {
       id: 'organizer',

@@ -81,7 +81,7 @@ export default function SecureLinkDetailScreen() {
           <Text style={styles.body}>Agreement evidence is stored and verified on the SecurePay backend.</Text>
         </AppCard>
 
-        <AppCard title="Release conditions">
+        <AppCard title="Agreement conditions">
           {detail.releaseConditions.map((c) => (
             <Text key={c} style={styles.bullet}>• {c}</Text>
           ))}

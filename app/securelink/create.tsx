@@ -93,7 +93,7 @@ export default function CreateSecureLinkScreen() {
 
           {step === 3 ? (
             <View style={styles.fields}>
-              <Input label="Release condition" value={releaseCondition} onChangeText={setReleaseCondition} multiline />
+              <Input label="Agreement completion condition" value={releaseCondition} onChangeText={setReleaseCondition} multiline />
               <Input label="Evidence required" value={evidenceRequired} onChangeText={setEvidenceRequired} />
               <Input label="Deadline (placeholder)" value={deadline} onChangeText={setDeadline} />
             </View>
