@@ -6,7 +6,7 @@ import {
   tabBarInactiveTintColor,
   tabBarStyle,
 } from '../../src/constants/app';
-import { colors } from '../../src/constants/theme';
+import { colors } from '../../src/theme';
 import { useAuth } from '../../src/hooks/useAuth';
 
 export default function TabsLayout() {
@@ -30,41 +30,14 @@ export default function TabsLayout() {
         sceneStyle: { backgroundColor: colors.background },
       }}
     >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarLabel: 'Home',
-        }}
-      />
+      <Tabs.Screen name="index" options={{ title: 'Home', tabBarLabel: 'Home' }} />
       <Tabs.Screen
         name="securelinks"
-        options={{
-          title: 'SecureLinks',
-          tabBarLabel: 'Links',
-        }}
+        options={{ title: 'SecureLinks', tabBarLabel: 'SecureLinks' }}
       />
-      <Tabs.Screen
-        name="pay"
-        options={{
-          title: 'Actions',
-          tabBarLabel: 'Actions',
-        }}
-      />
-      <Tabs.Screen
-        name="history"
-        options={{
-          title: 'Activity',
-          tabBarLabel: 'Activity',
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: 'Profile',
-          tabBarLabel: 'Profile',
-        }}
-      />
+      <Tabs.Screen name="create" options={{ title: 'Create', tabBarLabel: 'Create' }} />
+      <Tabs.Screen name="history" options={{ title: 'Activity', tabBarLabel: 'Activity' }} />
+      <Tabs.Screen name="account" options={{ title: 'Account', tabBarLabel: 'Account' }} />
     </Tabs>
   );
 }

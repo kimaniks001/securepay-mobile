@@ -2,6 +2,8 @@ export const BRAND = {
   name: 'SecurePay',
   byline: 'SecurePay by Keyman',
   coreLine: 'Money should follow the agreement.',
+  tagline: 'Trade freely. Fairness built in.',
+  promise: 'Agreement-backed payments for everyday trust.',
   tone: ['Quiet Trust', 'Simple', 'Kenyan', 'Mobile-first', 'Agreement-backed'] as const,
 } as const;
 

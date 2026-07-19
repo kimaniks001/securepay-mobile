@@ -2,12 +2,14 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 
-import { Button } from '../src/components/Button';
+import { AppButton } from '../src/components/AppButton';
 import { Input } from '../src/components/Input';
 import { SafeNotice } from '../src/components/SafeNotice';
 import { Screen } from '../src/components/Screen';
-import { STAGING_DEMO_WARNING } from '../src/doctrine/securepayDoctrine';
-import { colors, spacing, typography } from '../src/constants/theme';
+import { ScreenHeader } from '../src/components/ScreenHeader';
+import { SecurePayLogoMark } from '../src/components/SecurePayLogoMark';
+import { BRAND, STAGING_DEMO_WARNING } from '../src/doctrine/securepayDoctrine';
+import { colors, spacing, typography } from '../src/theme';
 import { useAuth } from '../src/hooks/useAuth';
 import { authenticateWithBiometrics, getBiometricCapability } from '../src/services/biometrics';
 import { isValidEmail, isValidPin } from '../src/utils/validation';
@@ -51,15 +53,13 @@ export default function LoginScreen() {
     if (!capability.isAvailable) {
       Alert.alert(
         'Biometrics unavailable',
-        'Enable Face ID, Touch ID, or fingerprint unlock on this device to use this option.',
+        'Enable Face ID, Touch ID, or fingerprint unlock on this device.',
       );
       return;
     }
 
     const authenticated = await authenticateWithBiometrics('Unlock SecurePay demo session');
-    if (!authenticated) {
-      return;
-    }
+    if (!authenticated) return;
 
     setSubmitting(true);
     try {
@@ -72,80 +72,31 @@ export default function LoginScreen() {
 
   return (
     <Screen style={styles.screen}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Welcome back</Text>
-        <Text style={styles.subtitle}>Sign in to your demo SecurePay session.</Text>
-        <Text style={styles.demoWarning}>{STAGING_DEMO_WARNING}</Text>
-      </View>
+      <SecurePayLogoMark size="md" />
+      <ScreenHeader title="Continue in demo mode" subtitle="Sign in to explore SecurePay on mobile." />
+      <Text style={styles.coreLine}>{BRAND.coreLine}</Text>
+      <Text style={styles.demoWarning}>{STAGING_DEMO_WARNING}</Text>
 
       <View style={styles.form}>
-        <Input
-          autoCapitalize="none"
-          autoComplete="email"
-          keyboardType="email-address"
-          label="Email"
-          value={email}
-          onChangeText={setEmail}
-          error={errors.email}
-        />
-        <Input
-          label="PIN"
-          value={pin}
-          onChangeText={setPin}
-          keyboardType="number-pad"
-          secureTextEntry
-          maxLength={6}
-          error={errors.pin}
-        />
+        <Input label="Email" autoCapitalize="none" keyboardType="email-address" value={email} onChangeText={setEmail} error={errors.email} />
+        <Input label="PIN" value={pin} onChangeText={setPin} keyboardType="number-pad" secureTextEntry maxLength={6} error={errors.pin} />
       </View>
 
       <View style={styles.actions}>
         <SafeNotice compact />
-        <Button label={submitting ? 'Signing in...' : 'Sign In'} disabled={submitting} onPress={handleSignIn} />
-        <Button
-          label="Use Biometrics"
-          variant="secondary"
-          disabled={submitting}
-          onPress={handleBiometricSignIn}
-        />
-        <Text style={styles.hint}>Demo PIN: any 4–6 digit code. No live money movement.</Text>
+        <AppButton label={submitting ? 'Signing in...' : 'Continue in demo mode'} disabled={submitting} onPress={handleSignIn} />
+        <AppButton label="Use biometrics" variant="secondary" disabled={submitting} onPress={handleBiometricSignIn} />
+        <Text style={styles.hint}>Demo PIN: any 4–6 digits. No live money movement.</Text>
       </View>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    justifyContent: 'space-between',
-    paddingVertical: spacing.xl,
-  },
-  header: {
-    gap: spacing.sm,
-    marginTop: spacing.lg,
-  },
-  title: {
-    ...typography.title,
-    color: colors.text,
-  },
-  subtitle: {
-    ...typography.body,
-    color: colors.textSecondary,
-  },
-  demoWarning: {
-    ...typography.caption,
-    color: colors.warning,
-    lineHeight: 18,
-  },
-  form: {
-    gap: spacing.lg,
-  },
-  actions: {
-    gap: spacing.sm,
-  },
-  hint: {
-    ...typography.caption,
-    color: colors.textMuted,
-    textAlign: 'center',
-    marginTop: spacing.sm,
-  },
+  screen: { justifyContent: 'space-between', paddingVertical: spacing.xl, gap: spacing.lg },
+  coreLine: { ...typography.heading, color: colors.primary, fontSize: 17 },
+  demoWarning: { ...typography.caption, color: colors.warning, lineHeight: 18 },
+  form: { gap: spacing.lg },
+  actions: { gap: spacing.sm },
+  hint: { ...typography.caption, color: colors.textMuted, textAlign: 'center' },
 });

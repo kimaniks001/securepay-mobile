@@ -1,11 +1,13 @@
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { AppCard } from '../../src/components/AppCard';
 import { SafeNotice } from '../../src/components/SafeNotice';
 import { Screen } from '../../src/components/Screen';
-import { colors, spacing, typography } from '../../src/constants/theme';
+import { ScreenHeader } from '../../src/components/ScreenHeader';
+import { MoneyStateStatusBadge } from '../../src/components/StatusBadge';
+import { colors, spacing, typography } from '../../src/theme';
 import { useTransactionHistory } from '../../src/hooks/useSecurePayApi';
 import { formatCurrency, formatRelativeDate } from '../../src/utils/format';
-import { getMoneyStateColor } from '../../src/utils/moneyState';
 
 export default function HistoryScreen() {
   const history = useTransactionHistory();
@@ -13,12 +15,10 @@ export default function HistoryScreen() {
   return (
     <Screen>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Activity history</Text>
-          <Text style={styles.subtitle}>
-            Mock SecureLink activity with safe status labels. No release or withdrawal claims.
-          </Text>
-        </View>
+        <ScreenHeader
+          title="Activity"
+          subtitle="Mock SecureLink activity with safe status labels."
+        />
 
         <SafeNotice compact />
 
@@ -37,9 +37,7 @@ export default function HistoryScreen() {
                 <Text style={styles.amount}>
                   {formatCurrency(item.agreementControlledAmount, item.currency)}
                 </Text>
-                <Text style={[styles.status, { color: getMoneyStateColor(item.moneyState) }]}>
-                  {item.moneyState.replaceAll('_', ' ')}
-                </Text>
+                <MoneyStateStatusBadge state={item.moneyState} />
               </View>
             </View>
           ))
@@ -55,23 +53,9 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     paddingBottom: spacing.xxl,
   },
-  header: {
-    gap: spacing.xs,
-    marginBottom: spacing.sm,
-  },
-  title: {
-    ...typography.title,
-    color: colors.text,
-    fontSize: 30,
-  },
-  subtitle: {
-    ...typography.body,
-    color: colors.textSecondary,
-    lineHeight: 22,
-  },
   row: {
     backgroundColor: colors.surface,
-    borderRadius: 12,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: colors.border,
     padding: spacing.md,
@@ -81,11 +65,12 @@ const styles = StyleSheet.create({
   },
   rowMain: {
     flex: 1,
-    gap: 2,
+    gap: 4,
   },
   rowAside: {
     alignItems: 'flex-end',
-    gap: 4,
+    gap: spacing.xs,
+    maxWidth: '46%',
   },
   name: {
     ...typography.label,
@@ -99,19 +84,14 @@ const styles = StyleSheet.create({
   note: {
     ...typography.caption,
     color: colors.textSecondary,
+    lineHeight: 16,
   },
   meta: {
     ...typography.caption,
     color: colors.textMuted,
-    marginTop: 2,
   },
   amount: {
     ...typography.label,
     color: colors.text,
-  },
-  status: {
-    ...typography.caption,
-    textTransform: 'capitalize',
-    fontWeight: '600',
   },
 });

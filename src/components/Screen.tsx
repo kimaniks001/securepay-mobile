@@ -1,7 +1,7 @@
 import { ActivityIndicator, StyleSheet, View, type ViewProps } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { colors, spacing } from '../constants/theme';
+import { colors, spacing } from '../theme';
 
 type ScreenProps = ViewProps & {
   children?: React.ReactNode;

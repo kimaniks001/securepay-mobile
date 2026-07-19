@@ -1,40 +1,51 @@
 import { useRouter } from 'expo-router';
-import { StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { Button } from '../src/components/Button';
+import { AppButton } from '../src/components/AppButton';
+import { AppCard } from '../src/components/AppCard';
 import { Screen } from '../src/components/Screen';
+import { SecurePayLogoMark } from '../src/components/SecurePayLogoMark';
 import { BRAND, STAGING_DEMO_WARNING } from '../src/doctrine/securepayDoctrine';
-import { colors, spacing, typography } from '../src/constants/theme';
+import { colors, spacing, typography } from '../src/theme';
 
 export default function WelcomeScreen() {
   const router = useRouter();
 
   return (
     <Screen style={styles.screen}>
-      <View style={styles.hero}>
-        <View style={styles.badge}>
-          <Text style={styles.badgeText}>Phase 2 · Demo</Text>
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        <SecurePayLogoMark size="lg" />
+        <View style={styles.hero}>
+          <Text style={styles.brandLine}>{BRAND.byline}</Text>
+          <Text style={styles.coreLine}>{BRAND.coreLine}</Text>
+          <Text style={styles.tagline}>Trade freely. Fairness built in.</Text>
+          <Text style={styles.subtitle}>
+            Agreement-backed payments for everyday trust. SecurePay in your pocket — quiet, simple,
+            and Kenyan.
+          </Text>
+          <Text style={styles.demoWarning}>{STAGING_DEMO_WARNING}</Text>
         </View>
-        <Text style={styles.brandLine}>{BRAND.byline}</Text>
-        <Text style={styles.title}>{BRAND.name}</Text>
-        <Text style={styles.coreLine}>{BRAND.coreLine}</Text>
-        <Text style={styles.subtitle}>
-          Agreement-backed SecureLinks for Kenyan groups and businesses. Quiet trust, mobile-first,
-          with backend as the source of truth.
-        </Text>
-        <Text style={styles.demoWarning}>{STAGING_DEMO_WARNING}</Text>
-      </View>
 
-      <View style={styles.features}>
-        <FeatureItem title="SecureLink" detail="Create agreement-backed payment requests safely" />
-        <FeatureItem title="Group SecureLink" detail="Welfare, general, and business group flows" />
-        <FeatureItem title="Provider-confirmed" detail="Money state comes from SecurePay backend only" />
-      </View>
+        <AppCard muted>
+          <FeatureItem title="SecureLink" detail="Agreement-backed requests with safe status labels" />
+          <FeatureItem title="Group SecureLink" detail="Welfare, general, and business group flows" />
+          <FeatureItem title="Provider-confirmed" detail="Money state from SecurePay backend only" />
+        </AppCard>
 
-      <View style={styles.actions}>
-        <Button label="Get Started" onPress={() => router.push('/login')} />
-        <Button label="View SecureLinks" variant="secondary" onPress={() => router.push('/login')} />
-      </View>
+        <View style={styles.actions}>
+          <AppButton label="Continue in demo mode" onPress={() => router.push('/login')} />
+          <AppButton
+            label="View SecureLinks"
+            variant="secondary"
+            onPress={() => router.push('/login')}
+          />
+          <AppButton
+            label="Learn how SecurePay works"
+            variant="ghost"
+            onPress={() => router.push('/login')}
+          />
+        </View>
+      </ScrollView>
     </Screen>
   );
 }
@@ -53,39 +64,27 @@ function FeatureItem({ title, detail }: { title: string; detail: string }) {
 
 const styles = StyleSheet.create({
   screen: {
-    justifyContent: 'space-between',
     paddingVertical: spacing.xl,
   },
+  scroll: {
+    gap: spacing.lg,
+    paddingBottom: spacing.xxl,
+  },
   hero: {
-    gap: spacing.md,
-    marginTop: spacing.xl,
-  },
-  badge: {
-    alignSelf: 'flex-start',
-    backgroundColor: colors.surfaceElevated,
-    borderRadius: 999,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-  },
-  badgeText: {
-    ...typography.caption,
-    color: colors.accent,
-    fontWeight: '600',
+    gap: spacing.sm,
   },
   brandLine: {
-    ...typography.caption,
-    color: colors.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  title: {
-    ...typography.title,
-    color: colors.text,
-    fontSize: 40,
+    ...typography.overline,
+    color: colors.primary,
   },
   coreLine: {
+    ...typography.title,
+    color: colors.text,
+    fontSize: 32,
+  },
+  tagline: {
     ...typography.heading,
-    color: colors.primary,
+    color: colors.accent,
     fontSize: 18,
   },
   subtitle: {
@@ -98,19 +97,17 @@ const styles = StyleSheet.create({
     color: colors.warning,
     lineHeight: 18,
   },
-  features: {
-    gap: spacing.md,
-  },
   featureItem: {
     flexDirection: 'row',
     gap: spacing.md,
     alignItems: 'flex-start',
+    paddingVertical: spacing.xs,
   },
   featureDot: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: colors.accent,
+    backgroundColor: colors.primary,
     marginTop: 6,
   },
   featureCopy: {
@@ -118,13 +115,13 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   featureTitle: {
-    ...typography.heading,
+    ...typography.label,
     color: colors.text,
-    fontSize: 16,
   },
   featureDetail: {
     ...typography.caption,
     color: colors.textSecondary,
+    lineHeight: 18,
   },
   actions: {
     gap: spacing.sm,
