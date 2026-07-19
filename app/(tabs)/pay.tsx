@@ -1,99 +1,58 @@
-import { useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '../../src/components/Button';
 import { Card } from '../../src/components/Card';
-import { Input } from '../../src/components/Input';
+import { SafeNotice } from '../../src/components/SafeNotice';
 import { Screen } from '../../src/components/Screen';
+import { disabledMoneyActions } from '../../src/doctrine/securepayDoctrine';
 import { colors, spacing, typography } from '../../src/constants/theme';
-import { authenticateWithBiometrics } from '../../src/services/biometrics';
-import { formatCurrency } from '../../src/utils/format';
-import { isValidAmount, sanitizeAmountInput } from '../../src/utils/validation';
 
 export default function PayScreen() {
-  const [recipient, setRecipient] = useState('');
-  const [amount, setAmount] = useState('');
-  const [note, setNote] = useState('');
-  const [errors, setErrors] = useState<{ recipient?: string; amount?: string }>({});
-  const [submitting, setSubmitting] = useState(false);
-
-  async function handlePayment() {
-    const nextErrors: { recipient?: string; amount?: string } = {};
-
-    if (!recipient.trim()) {
-      nextErrors.recipient = 'Recipient is required';
-    }
-    if (!isValidAmount(amount)) {
-      nextErrors.amount = 'Enter a valid amount up to $1,000,000';
-    }
-
-    setErrors(nextErrors);
-    if (Object.keys(nextErrors).length > 0) {
-      return;
-    }
-
-    const confirmed = await authenticateWithBiometrics('Confirm payment');
-    if (!confirmed) {
-      Alert.alert('Authentication required', 'Confirm the payment with biometrics to continue.');
-      return;
-    }
-
-    setSubmitting(true);
-    setTimeout(() => {
-      setSubmitting(false);
-      Alert.alert(
-        'Payment queued',
-        `${formatCurrency(Number(amount))} to ${recipient.trim()} is pending backend integration.`,
-      );
-      setRecipient('');
-      setAmount('');
-      setNote('');
-    }, 600);
-  }
+  const router = useRouter();
 
   return (
     <Screen>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <Text style={styles.title}>Send payment</Text>
-          <Text style={styles.subtitle}>Transfers are protected with biometric confirmation.</Text>
+          <Text style={styles.title}>SecureLink actions</Text>
+          <Text style={styles.subtitle}>
+            Create or review SecureLink payment requests. This mobile build does not complete
+            payments.
+          </Text>
         </View>
 
-        <Card>
-          <Input
-            label="Recipient"
-            placeholder="Name, phone, or account"
-            value={recipient}
-            onChangeText={setRecipient}
-            error={errors.recipient}
+        <SafeNotice message="This mobile build does not complete payments. Payment confirmation must come from SecurePay backend provider confirmation." />
+
+        <Card title="Available actions" subtitle="Demo / staging only">
+          <Button label="Create SecureLink" onPress={() => router.push('/securelink/create')} />
+          <Button
+            label="Create Group SecureLink"
+            variant="secondary"
+            onPress={() => router.push('/securelink/create-group')}
           />
-          <Input
-            label="Amount"
-            placeholder="0.00"
-            keyboardType="decimal-pad"
-            value={amount}
-            onChangeText={(value) => setAmount(sanitizeAmountInput(value))}
-            error={errors.amount}
-          />
-          <Input
-            label="Note (optional)"
-            placeholder="What is this for?"
-            value={note}
-            onChangeText={setNote}
+          <Button
+            label="Browse SecureLinks"
+            variant="ghost"
+            onPress={() => router.push('/(tabs)/securelinks')}
           />
         </Card>
 
-        <Card title="Security" subtitle="Phase 1 safeguards">
-          <Text style={styles.securityItem}>• Biometric confirmation before sending</Text>
-          <Text style={styles.securityItem}>• Amount validation and input sanitization</Text>
-          <Text style={styles.securityItem}>• No card data stored on device in this phase</Text>
+        <Card title="Disabled on mobile" subtitle="Backend-only money actions">
+          {disabledMoneyActions.map((action) => (
+            <Text key={action} style={styles.disabledItem}>
+              • {action}
+            </Text>
+          ))}
         </Card>
 
-        <Button
-          label={submitting ? 'Processing...' : 'Confirm Payment'}
-          disabled={submitting}
-          onPress={handlePayment}
-        />
+        <Card title="Payment request" subtitle="Placeholder form">
+          <Text style={styles.placeholderCopy}>
+            Use Create SecureLink to draft an agreement-backed request. The mobile app saves drafts
+            locally through the mock API adapter only. Provider confirmation, settlement readiness,
+            and release conditions are handled by the SecurePay API Gateway — not this phone.
+          </Text>
+        </Card>
       </ScrollView>
     </Screen>
   );
@@ -116,8 +75,15 @@ const styles = StyleSheet.create({
   subtitle: {
     ...typography.body,
     color: colors.textSecondary,
+    lineHeight: 22,
   },
-  securityItem: {
+  disabledItem: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    lineHeight: 20,
+    textTransform: 'capitalize',
+  },
+  placeholderCopy: {
     ...typography.caption,
     color: colors.textSecondary,
     lineHeight: 20,

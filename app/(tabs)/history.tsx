@@ -1,36 +1,49 @@
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { SafeNotice } from '../../src/components/SafeNotice';
 import { Screen } from '../../src/components/Screen';
-import { MOCK_TRANSACTIONS, statusColor } from '../../src/constants/app';
 import { colors, spacing, typography } from '../../src/constants/theme';
+import { useTransactionHistory } from '../../src/hooks/useSecurePayApi';
 import { formatCurrency, formatRelativeDate } from '../../src/utils/format';
+import { getMoneyStateColor } from '../../src/utils/moneyState';
 
 export default function HistoryScreen() {
+  const history = useTransactionHistory();
+
   return (
     <Screen>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <Text style={styles.title}>Transaction history</Text>
-          <Text style={styles.subtitle}>Mock data for the initial app shell.</Text>
+          <Text style={styles.title}>Activity history</Text>
+          <Text style={styles.subtitle}>
+            Mock SecureLink activity with safe status labels. No release or withdrawal claims.
+          </Text>
         </View>
 
-        {MOCK_TRANSACTIONS.map((transaction) => (
-          <View key={transaction.id} style={styles.row}>
-            <View style={styles.rowMain}>
-              <Text style={styles.name}>{transaction.recipient}</Text>
-              <Text style={styles.note}>{transaction.note ?? 'No note'}</Text>
-              <Text style={styles.meta}>{formatRelativeDate(transaction.createdAt)}</Text>
+        <SafeNotice compact />
+
+        {history.loading ? (
+          <ActivityIndicator color={colors.primary} />
+        ) : (
+          history.data?.map((item) => (
+            <View key={item.id} style={styles.row}>
+              <View style={styles.rowMain}>
+                <Text style={styles.name}>{item.title}</Text>
+                <Text style={styles.activity}>{item.activityDisplay}</Text>
+                <Text style={styles.note}>{item.note ?? 'Agreement-backed activity record'}</Text>
+                <Text style={styles.meta}>{formatRelativeDate(item.createdAt)}</Text>
+              </View>
+              <View style={styles.rowAside}>
+                <Text style={styles.amount}>
+                  {formatCurrency(item.agreementControlledAmount, item.currency)}
+                </Text>
+                <Text style={[styles.status, { color: getMoneyStateColor(item.moneyState) }]}>
+                  {item.moneyState.replaceAll('_', ' ')}
+                </Text>
+              </View>
             </View>
-            <View style={styles.rowAside}>
-              <Text style={styles.amount}>
-                -{formatCurrency(transaction.amount, transaction.currency)}
-              </Text>
-              <Text style={[styles.status, { color: statusColor[transaction.status] }]}>
-                {transaction.status}
-              </Text>
-            </View>
-          </View>
-        ))}
+          ))
+        )}
       </ScrollView>
     </Screen>
   );
@@ -54,6 +67,7 @@ const styles = StyleSheet.create({
   subtitle: {
     ...typography.body,
     color: colors.textSecondary,
+    lineHeight: 22,
   },
   row: {
     backgroundColor: colors.surface,
@@ -76,6 +90,11 @@ const styles = StyleSheet.create({
   name: {
     ...typography.label,
     color: colors.text,
+  },
+  activity: {
+    ...typography.caption,
+    color: colors.primary,
+    fontWeight: '600',
   },
   note: {
     ...typography.caption,

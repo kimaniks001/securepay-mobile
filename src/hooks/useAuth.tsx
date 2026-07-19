@@ -7,7 +7,8 @@ import {
   saveAuthToken,
   saveUserProfile,
 } from '../services/secureStorage';
-import type { UserProfile } from '../types';
+import type { UserProfile } from '../types/auth';
+import { MOCK_KS_NUMBER } from '../mocks/mockProfile';
 
 type AuthContextValue = {
   user: UserProfile | null;
@@ -24,6 +25,7 @@ const DEMO_USER: UserProfile = {
   name: 'Kimani K.',
   email: 'demo@securepay.app',
   phone: '+254 700 000 000',
+  ksNumber: MOCK_KS_NUMBER,
 };
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {

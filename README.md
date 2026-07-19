@@ -1,93 +1,124 @@
 # SecurePay Mobile
 
-SecurePay is a cross-platform mobile wallet app built with **Expo SDK 57** and **React Native**. This repository contains **Phase 1**: the initial app shell with navigation, authentication flow, secure storage, biometric hooks, and core payment screens.
+**SecurePay by Keyman** — *Money should follow the agreement.*
 
-## Features (Phase 1)
+Cross-platform mobile client for SecurePay, built with **Expo SDK 57** and **React Native**. This app is a **mobile client only**. It does not implement backend money logic and communicates with SecurePay exclusively through the **SecurePay API Gateway** in future phases.
 
-- **Welcome & sign-in flow** with email + PIN validation
-- **Biometric authentication** via `expo-local-authentication`
-- **Encrypted session storage** via `expo-secure-store` (device keychain)
-- **Tab navigation**: Home, Pay, History, Profile
-- **Payment screen** with amount validation and biometric confirmation
-- **Dark fintech UI** with reusable components and theme tokens
-- **Mock data** for balance and transactions until backend integration
+## Phase summary
 
-## Tech Stack
-
-| Layer | Choice |
+| Phase | Scope |
 | --- | --- |
-| Framework | Expo 57 + React Native 0.86 |
-| Language | TypeScript |
-| Navigation | Expo Router (file-based) |
-| Secure storage | expo-secure-store |
-| Biometrics | expo-local-authentication |
+| **1 (merged)** | Expo shell, Welcome/Login/Home/Pay/History/Profile, secure storage, biometrics, mock balance |
+| **2 (current)** | Doctrine alignment, API adapter foundation, SecureLink domain types, mock API, safe copy |
+| **3 (next)** | Live SecurePay API Gateway integration (staging), authenticated API calls, sync |
+| **4** | Production hardening, audit, app store release |
 
-## Getting Started
+## Phase 2 — Doctrine alignment
+
+Phase 2 aligns public UI with SecurePay doctrine:
+
+- **Brand:** SecurePay by Keyman · *Money should follow the agreement.*
+- **Tone:** Quiet Trust · Simple · Kenyan · Mobile-first · Agreement-backed
+- **Safe terms:** SecureLink, Group SecureLink, Agreement Account, Provider-confirmed, Payment Ready readiness, Review hold, Settlement readiness, KSNumber
+- **Forbidden public terms avoided:** escrow, custody, withdraw, cash out, fake payment success, guaranteed payout, etc.
+
+### What Phase 2 adds
+
+- `src/doctrine/securepayDoctrine.ts` — forbidden terms, safe labels, fee doctrine, mobile safety rules
+- `src/api/` — mock-first API adapter (`securepayApi`, config, types, mock implementation)
+- `src/mocks/` — SecureLink, profile, and activity mock scenarios
+- **SecureLinks tab** and detail/create screens
+- **Readiness screens** for account and Payment Ready readiness
+- **SafeNotice** component on payment, wallet, readiness, and account screens
+- Doctrine-safe copy on all Phase 1 screens
+
+## What this app does NOT do
+
+- No real payments or fake payment success
+- No withdrawal, payout, or release actions on mobile
+- No direct Stripe, 2C2P, M-Pesa, PesaLink, or Choice Bank integration
+- No direct Supabase or ledger access
+- No production API URL by default
+- No committed secrets or `.env` files
+
+## API mode
+
+| Mode | Default | Behavior |
+| --- | --- | --- |
+| `mock` | **Yes** | All API calls return local mock data |
+| `staging` | No | Reserved for Phase 3 — requires `EXPO_PUBLIC_SECUREPAY_API_BASE_URL` |
+| `production` | Disabled | Blocked unless explicitly configured in a future phase |
+
+Optional environment variables (not committed):
+
+```bash
+# .env.local (create locally — never commit)
+EXPO_PUBLIC_SECUREPAY_API_MODE=mock
+# EXPO_PUBLIC_SECUREPAY_API_BASE_URL=https://staging-api.securepay.example
+```
+
+## Getting started
 
 ### Prerequisites
 
 - Node.js 22.13+
 - npm 10+
-- [Expo Go](https://expo.dev/go) on a physical device, or Android/iOS simulator
+- [Expo Go](https://expo.dev/go) on a device, or Android/iOS simulator
 
-### Install & run
+### Install and run
 
 ```bash
 npm install
 npm start
 ```
 
-Then press:
-
-- `a` for Android emulator
-- `i` for iOS simulator (macOS only)
-- Scan the QR code with Expo Go on your phone
-
-### Type check
+### Checks
 
 ```bash
 npm run typecheck
 ```
 
-## Project Structure
+## Project structure
 
 ```
-app/                    # Expo Router screens
-  (tabs)/               # Authenticated tab navigator
-  welcome.tsx           # Marketing / onboarding
-  login.tsx             # Sign-in screen
+app/
+  (tabs)/               # Home, SecureLinks, Actions, Activity, Profile
+  securelink/           # Detail, create, create-group
+  readiness/            # Account & Payment Ready readiness
+  welcome.tsx
+  login.tsx
 src/
-  components/           # UI primitives (Button, Input, Card, Screen)
-  constants/            # Theme tokens and mock data
-  hooks/                # Auth context and hooks
+  api/                  # SecurePay API adapter (mock default)
+  doctrine/             # SecurePay doctrine constants
+  mocks/                # Mock SecureLinks, profile, transactions
+  components/           # UI + SafeNotice
+  hooks/                # Auth + API hooks
   services/             # Secure storage & biometrics
-  types/                # Shared TypeScript types
-  utils/                # Validation and formatting helpers
+  types/                # Shared types
+  utils/                # Validation, formatting, money state
 ```
 
-## Demo Credentials
-
-Phase 1 uses a local demo session — no backend is required:
+## Demo credentials
 
 - **Email:** any valid email (default `demo@securepay.app`)
 - **PIN:** any 4–6 digit code
-- **Biometrics:** works when enrolled on the device
+- **Biometrics:** when enrolled on device
+- **KSNumber:** `KS-2026-0042` (mock)
 
-## Security Notes
+## Fee doctrine (display only)
 
-- Auth tokens and profile data are stored with `WHEN_UNLOCKED_THIS_DEVICE_ONLY`.
-- Payment confirmation requires biometric authentication when available.
-- Card validation utilities (Luhn check) are included for future card flows.
-- **No real payments** are processed in Phase 1.
-
-## Roadmap
-
-| Phase | Scope |
+| SecureLink type | Fee |
 | --- | --- |
-| **1 (current)** | App shell, auth UX, secure storage, mock data |
-| 2 | Backend API integration, real auth, transaction sync |
-| 3 | Payment gateway (e.g. Stripe / 2C2P), KYC, push notifications |
-| 4 | Production hardening, audit, app store release |
+| Welfare Group SecureLink | KES 10 per contribution |
+| General Group SecureLink | KES 20 per contribution |
+| Business solution contribution | KES 20 per contribution |
+
+## Security notes
+
+- Session data stored in Expo SecureStore (`WHEN_UNLOCKED_THIS_DEVICE_ONLY`)
+- Biometric unlock for demo session only — not provider confirmation
+- Backend remains the source of truth for all money state
+- Future backend integration uses **SecurePay API Gateway only**
 
 ## License
 

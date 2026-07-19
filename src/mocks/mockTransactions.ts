@@ -1,0 +1,92 @@
+import type { SecurePayTransaction } from '../api/types';
+
+const now = Date.now();
+const hours = (n: number) => new Date(now - n * 60 * 60 * 1000).toISOString();
+const days = (n: number) => new Date(now - n * 24 * 60 * 60 * 1000).toISOString();
+
+export const mockTransactions: SecurePayTransaction[] = [
+  {
+    id: 'act_001',
+    secureLinkSlug: 'landlord-agreement-jan',
+    title: 'Landlord agreement — January rent',
+    agreementControlledAmount: 25000,
+    currency: 'KES',
+    activityLabel: 'securelink_created',
+    activityDisplay: 'SecureLink created',
+    moneyState: 'draft',
+    createdAt: days(2),
+    note: 'Draft saved on mobile. Backend is source of truth.',
+  },
+  {
+    id: 'act_002',
+    secureLinkSlug: 'landlord-agreement-jan',
+    title: 'Landlord agreement — January rent',
+    agreementControlledAmount: 25000,
+    currency: 'KES',
+    activityLabel: 'payment_initiated',
+    activityDisplay: 'Payment initiated',
+    moneyState: 'awaiting_payment',
+    createdAt: hours(8),
+    note: 'Initiated through SecurePay API Gateway placeholder.',
+  },
+  {
+    id: 'act_003',
+    secureLinkSlug: 'photography-deposit',
+    title: 'Photography package deposit',
+    agreementControlledAmount: 8000,
+    currency: 'KES',
+    activityLabel: 'provider_confirmation_pending',
+    activityDisplay: 'Provider confirmation pending',
+    moneyState: 'awaiting_payment',
+    createdAt: hours(6),
+  },
+  {
+    id: 'act_004',
+    secureLinkSlug: 'photography-deposit',
+    title: 'Photography package deposit',
+    agreementControlledAmount: 8000,
+    currency: 'KES',
+    activityLabel: 'provider_confirmed',
+    activityDisplay: 'Provider-confirmed',
+    moneyState: 'provider_confirmed',
+    createdAt: days(1),
+    note: 'Shown for demo only. Mobile did not confirm payment.',
+  },
+  {
+    id: 'act_005',
+    secureLinkSlug: 'community-review-case',
+    title: 'Community contribution — review case',
+    agreementControlledAmount: 15000,
+    currency: 'KES',
+    activityLabel: 'review_hold',
+    activityDisplay: 'Review hold',
+    moneyState: 'review_hold',
+    createdAt: hours(30),
+  },
+  {
+    id: 'act_006',
+    secureLinkSlug: 'settlement-missing-demo',
+    title: 'Supplier agreement — settlement check',
+    agreementControlledAmount: 18000,
+    currency: 'KES',
+    activityLabel: 'ledger_readiness_pending',
+    activityDisplay: 'Ledger readiness pending',
+    moneyState: 'settlement_readiness_pending',
+    createdAt: days(4),
+    note: 'Settlement readiness missing on backend.',
+  },
+  {
+    id: 'act_007',
+    secureLinkSlug: 'welfare-chama-march',
+    title: 'Welfare chama — March circle',
+    agreementControlledAmount: 5000,
+    currency: 'KES',
+    activityLabel: 'payment_initiated',
+    activityDisplay: 'Payment initiated',
+    moneyState: 'agreement_controlled',
+    createdAt: hours(10),
+    note: 'Welfare Group SecureLink — KES 10 fee per contribution (doctrine).',
+  },
+];
+
+export const DEMO_AGREEMENT_READINESS_KES = 12450;
