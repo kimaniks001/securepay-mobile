@@ -9,7 +9,8 @@ Cross-platform mobile client for SecurePay, built with **Expo SDK 57** and **Rea
 | Phase | Scope |
 | --- | --- |
 | **1 (merged)** | Expo shell, Welcome/Login/Home/Pay/History/Profile, secure storage, biometrics, mock balance |
-| **2 (current)** | Doctrine alignment, API adapter foundation, SecureLink domain types, mock API, safe copy |
+| **2 (merged)** | Doctrine alignment, API adapter, mock SecureLinks, readiness screens, safe copy |
+| **2B (current)** | Bolt web UI alignment — theme, components, journeys, navigation labels |
 | **3 (next)** | Live SecurePay API Gateway integration (staging), authenticated API calls, sync |
 | **4** | Production hardening, audit, app store release |
 
@@ -31,6 +32,27 @@ Phase 2 aligns public UI with SecurePay doctrine:
 - **Readiness screens** for account and Payment Ready readiness
 - **SafeNotice** component on payment, wallet, readiness, and account screens
 - Doctrine-safe copy on all Phase 1 screens
+
+## Phase 2B — Bolt UI and mobile journey alignment
+
+Mobile now aligns to the **Bolt web UI** (`kimaniks001/Ulyamwisho`) as the visual and journey reference. Web flows are adapted into native phone screens — not copied as React DOM components.
+
+### What Phase 2B adds
+
+- `docs/MOBILE_PHASE_2B_BOLT_UI_ALIGNMENT.md` — alignment specification
+- `src/theme/` — SecurePay green/orange design tokens (trust green + warm orange accent)
+- Bolt-aligned components: `AppButton`, `AppCard`, `StatusBadge`, `MoneyStateCard`, `ScreenHeader`, `StepCard`, `FeeDoctrineCard`, `ReadinessPanel`, `SecurePayLogoMark`
+- `src/doctrine/mobileJourneyMap.ts` — canonical mobile journeys
+- `src/doctrine/uiTextGuard.ts` — `assertSafeUiTextForMobile()` helper
+- Step-based Create SecureLink and Create Group SecureLink flows
+- Tab labels: **Home · SecureLinks · Create · Activity · Account**
+- `npm run check:ui-safety` — lightweight forbidden-term and mock-mode checks
+
+### Still mock / staging only
+
+- No real payments, withdrawal, release, or payout
+- No direct provider integration (Stripe, 2C2P, M-Pesa, PesaLink, Choice Bank, Supabase, ledger)
+- Backend remains the source of truth
 
 ## What this app does NOT do
 
@@ -76,20 +98,22 @@ npm start
 
 ```bash
 npm run typecheck
+npm run check:ui-safety
 ```
 
 ## Project structure
 
 ```
 app/
-  (tabs)/               # Home, SecureLinks, Actions, Activity, Profile
-  securelink/           # Detail, create, create-group
+  (tabs)/               # Home, SecureLinks, Create, Activity, Account
+  securelink/           # Detail, step-based create flows
   readiness/            # Account & Payment Ready readiness
   welcome.tsx
   login.tsx
 src/
+  theme/                # SecurePay design tokens (Phase 2B)
   api/                  # SecurePay API adapter (mock default)
-  doctrine/             # SecurePay doctrine constants
+  doctrine/             # Doctrine, journey map, UI text guard
   mocks/                # Mock SecureLinks, profile, transactions
   components/           # UI + SafeNotice
   hooks/                # Auth + API hooks

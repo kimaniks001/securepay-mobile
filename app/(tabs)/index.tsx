@@ -1,72 +1,117 @@
 import { useRouter } from 'expo-router';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { Button } from '../../src/components/Button';
-import { Card } from '../../src/components/Card';
+import { AppButton } from '../../src/components/AppButton';
+import { AppCard } from '../../src/components/AppCard';
+import { MoneyStateCard } from '../../src/components/MoneyStateCard';
+import { ReadinessPanel } from '../../src/components/ReadinessPanel';
 import { SafeNotice } from '../../src/components/SafeNotice';
 import { Screen } from '../../src/components/Screen';
-import { safeMoneyStateLabels, STAGING_DEMO_WARNING } from '../../src/doctrine/securepayDoctrine';
-import { colors, spacing, typography } from '../../src/constants/theme';
+import { ScreenHeader } from '../../src/components/ScreenHeader';
+import { safeMoneyStateLabels } from '../../src/doctrine/securepayDoctrine';
+import { colors, spacing, typography } from '../../src/theme';
 import { useAuth } from '../../src/hooks/useAuth';
-import { useKSNumberProfile, useTransactionHistory } from '../../src/hooks/useSecurePayApi';
+import {
+  useAccountReadiness,
+  useKSNumberProfile,
+  usePaymentReadyReadiness,
+  useSecureLinks,
+  useTransactionHistory,
+} from '../../src/hooks/useSecurePayApi';
 import { DEMO_AGREEMENT_READINESS_KES } from '../../src/mocks/mockTransactions';
 import { formatCurrency, formatRelativeDate } from '../../src/utils/format';
-import { getMoneyStateColor } from '../../src/utils/moneyState';
+import { MoneyStateStatusBadge } from '../../src/components/StatusBadge';
 
 export default function HomeScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const profile = useKSNumberProfile();
+  const links = useSecureLinks();
+  const readiness = useAccountReadiness();
+  const paymentReady = usePaymentReadyReadiness();
   const history = useTransactionHistory();
+
+  const groupCount = links.data?.filter((l) => l.kind === 'group_securelink').length ?? 0;
+  const secureLinkCount = links.data?.filter((l) => l.kind === 'securelink').length ?? 0;
   const recentActivity = history.data?.slice(0, 3) ?? [];
 
   return (
     <Screen>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <Text style={styles.greeting}>Hello, {user?.name.split(' ')[0] ?? 'there'}</Text>
-          <Text style={styles.caption}>Agreement overview · demo / staging</Text>
-          <Text style={styles.demoWarning}>{STAGING_DEMO_WARNING}</Text>
-        </View>
+        <ScreenHeader
+          eyebrow="SecurePay dashboard"
+          title={`Hello, ${user?.name.split(' ')[0] ?? 'there'}`}
+          subtitle="Agreement overview · demo / staging"
+        />
 
-        <SafeNotice compact />
+        <SafeNotice message="This mobile build does not confirm payments, release money, withdraw funds, or move money directly." />
 
-        <Card style={styles.balanceCard}>
-          <Text style={styles.balanceLabel}>{safeMoneyStateLabels.demoBalance}</Text>
-          <Text style={styles.balanceValue}>{formatCurrency(DEMO_AGREEMENT_READINESS_KES)}</Text>
-          <Text style={styles.balanceHint}>{safeMoneyStateLabels.agreementReadiness}</Text>
-          <Text style={styles.balanceHint}>{safeMoneyStateLabels.notForWithdrawal}</Text>
-          <Text style={styles.balanceHint}>{safeMoneyStateLabels.noLiveMoney}</Text>
-          <View style={styles.balanceActions}>
-            <Button label="SecureLinks" onPress={() => router.push('/(tabs)/securelinks')} />
-            <Button
-              label="SecureLink actions"
-              variant="secondary"
-              onPress={() => router.push('/(tabs)/pay')}
-            />
-            <Button
-              label="Activity"
-              variant="ghost"
-              onPress={() => router.push('/(tabs)/history')}
-            />
-          </View>
-        </Card>
+        <AppCard>
+          <MoneyStateCard
+            title="Demo balance / placeholder only"
+            amount={DEMO_AGREEMENT_READINESS_KES}
+            state="agreement_controlled"
+            subtitle={safeMoneyStateLabels.agreementReadiness}
+            placeholder
+          />
+          <Text style={styles.hint}>{safeMoneyStateLabels.noLiveMoney}</Text>
+        </AppCard>
 
-        <Card title="KSNumber" subtitle="Placeholder profile from mock API">
+        <AppCard title="My KSNumber" subtitle="Identity placeholder">
           {profile.loading ? (
             <ActivityIndicator color={colors.primary} />
           ) : (
             <>
               <InfoRow label="KSNumber" value={profile.data?.ksNumber ?? user?.ksNumber ?? '—'} />
-              <InfoRow label="Account readiness" value={profile.data?.accountReadiness.label ?? '—'} />
-              <Button
-                label="View account readiness"
-                variant="secondary"
-                onPress={() => router.push('/readiness/account')}
-              />
+              <InfoRow label="Display name" value={profile.data?.displayName ?? user?.name ?? '—'} />
             </>
           )}
-        </Card>
+        </AppCard>
+
+        <View style={styles.quickGrid}>
+          <QuickTile
+            label="SecureLinks"
+            value={String(secureLinkCount)}
+            onPress={() => router.push('/(tabs)/securelinks')}
+          />
+          <QuickTile
+            label="Group SecureLinks"
+            value={String(groupCount)}
+            onPress={() => router.push('/(tabs)/securelinks')}
+          />
+        </View>
+
+        {readiness.data && paymentReady.data ? (
+          <ReadinessPanel
+            title="Readiness"
+            subtitle="Readiness only — not payout"
+            items={[
+              {
+                label: 'Payment Ready readiness',
+                value: paymentReady.data.label,
+                state: paymentReady.data.status,
+                explanation: paymentReady.data.summary,
+              },
+              {
+                label: 'Account readiness',
+                value: readiness.data.label,
+                state: readiness.data.status,
+                explanation: readiness.data.summary,
+              },
+            ]}
+          />
+        ) : (
+          <ActivityIndicator color={colors.primary} />
+        )}
+
+        <View style={styles.actions}>
+          <AppButton label="Create SecureLink" onPress={() => router.push('/securelink/create')} />
+          <AppButton
+            label="View all SecureLinks"
+            variant="secondary"
+            onPress={() => router.push('/(tabs)/securelinks')}
+          />
+        </View>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Recent activity</Text>
@@ -74,20 +119,18 @@ export default function HomeScreen() {
             <ActivityIndicator color={colors.primary} />
           ) : (
             recentActivity.map((item) => (
-              <View key={item.id} style={styles.transactionRow}>
-                <View style={styles.transactionMain}>
-                  <Text style={styles.transactionName}>{item.title}</Text>
-                  <Text style={styles.transactionMeta}>
+              <View key={item.id} style={styles.activityRow}>
+                <View style={styles.activityMain}>
+                  <Text style={styles.activityTitle}>{item.title}</Text>
+                  <Text style={styles.activityMeta}>
                     {formatRelativeDate(item.createdAt)} · {item.activityDisplay}
                   </Text>
                 </View>
-                <View style={styles.transactionAside}>
-                  <Text style={styles.transactionAmount}>
+                <View style={styles.activityAside}>
+                  <Text style={styles.activityAmount}>
                     {formatCurrency(item.agreementControlledAmount, item.currency)}
                   </Text>
-                  <Text style={[styles.transactionState, { color: getMoneyStateColor(item.moneyState) }]}>
-                    {item.moneyState.replaceAll('_', ' ')}
-                  </Text>
+                  <MoneyStateStatusBadge state={item.moneyState} />
                 </View>
               </View>
             ))
@@ -107,51 +150,53 @@ function InfoRow({ label, value }: { label: string; value: string }) {
   );
 }
 
+function QuickTile({
+  label,
+  value,
+  onPress,
+}: {
+  label: string;
+  value: string;
+  onPress: () => void;
+}) {
+  return (
+    <AppCard style={styles.quickTile}>
+      <Text style={styles.quickValue}>{value}</Text>
+      <Text style={styles.quickLabel}>{label}</Text>
+      <AppButton label="Open" variant="ghost" onPress={onPress} />
+    </AppCard>
+  );
+}
+
 const styles = StyleSheet.create({
   content: {
     paddingVertical: spacing.lg,
     gap: spacing.lg,
     paddingBottom: spacing.xxl,
   },
-  header: {
-    gap: spacing.xs,
-  },
-  greeting: {
-    ...typography.title,
-    color: colors.text,
-    fontSize: 30,
-  },
-  caption: {
-    ...typography.body,
-    color: colors.textSecondary,
-  },
-  demoWarning: {
-    ...typography.caption,
-    color: colors.warning,
-    lineHeight: 18,
-  },
-  balanceCard: {
-    gap: spacing.sm,
-    backgroundColor: colors.surfaceElevated,
-  },
-  balanceLabel: {
-    ...typography.caption,
-    color: colors.textSecondary,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  balanceValue: {
-    ...typography.title,
-    color: colors.text,
-    fontSize: 36,
-  },
-  balanceHint: {
+  hint: {
     ...typography.caption,
     color: colors.textMuted,
   },
-  balanceActions: {
+  quickGrid: {
+    flexDirection: 'row',
+    gap: spacing.md,
+  },
+  quickTile: {
+    flex: 1,
+    alignItems: 'flex-start',
+  },
+  quickValue: {
+    ...typography.title,
+    color: colors.primary,
+    fontSize: 28,
+  },
+  quickLabel: {
+    ...typography.caption,
+    color: colors.textSecondary,
+  },
+  actions: {
     gap: spacing.sm,
-    marginTop: spacing.sm,
   },
   infoRow: {
     flexDirection: 'row',
@@ -175,9 +220,9 @@ const styles = StyleSheet.create({
     ...typography.heading,
     color: colors.text,
   },
-  transactionRow: {
+  activityRow: {
     backgroundColor: colors.surface,
-    borderRadius: 12,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: colors.border,
     padding: spacing.md,
@@ -185,29 +230,25 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: spacing.md,
   },
-  transactionMain: {
+  activityMain: {
     flex: 1,
-    gap: 2,
-  },
-  transactionAside: {
-    alignItems: 'flex-end',
     gap: 4,
   },
-  transactionName: {
+  activityAside: {
+    alignItems: 'flex-end',
+    gap: spacing.xs,
+    maxWidth: '46%',
+  },
+  activityTitle: {
     ...typography.label,
     color: colors.text,
   },
-  transactionMeta: {
+  activityMeta: {
     ...typography.caption,
     color: colors.textMuted,
-    marginTop: 2,
   },
-  transactionAmount: {
+  activityAmount: {
     ...typography.label,
     color: colors.text,
-  },
-  transactionState: {
-    ...typography.caption,
-    textTransform: 'capitalize',
   },
 });

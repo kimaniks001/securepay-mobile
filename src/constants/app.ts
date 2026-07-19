@@ -1,8 +1,8 @@
-import { colors, spacing } from './theme';
+import { colors, spacing } from '../theme';
 
 export const tabBarStyle = {
-  backgroundColor: colors.surface,
-  borderTopColor: colors.border,
+  backgroundColor: colors.tabBar,
+  borderTopColor: colors.tabBarBorder,
   borderTopWidth: 1,
   height: 64,
   paddingBottom: spacing.sm,

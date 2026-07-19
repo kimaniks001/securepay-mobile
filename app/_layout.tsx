@@ -2,7 +2,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 
 import { AuthProvider } from '../src/hooks/useAuth';
-import { colors } from '../src/constants/theme';
+import { colors } from '../src/theme';
 
 export default function RootLayout() {
   return (

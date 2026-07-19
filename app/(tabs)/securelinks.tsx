@@ -1,13 +1,15 @@
 import { useRouter } from 'expo-router';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { Button } from '../../src/components/Button';
+import { AppButton } from '../../src/components/AppButton';
 import { SafeNotice } from '../../src/components/SafeNotice';
 import { Screen } from '../../src/components/Screen';
-import { colors, spacing, typography } from '../../src/constants/theme';
+import { ScreenHeader } from '../../src/components/ScreenHeader';
+import { MoneyStateStatusBadge } from '../../src/components/StatusBadge';
+import { colors, spacing, typography } from '../../src/theme';
 import { useSecureLinks } from '../../src/hooks/useSecurePayApi';
 import { formatCurrency } from '../../src/utils/format';
-import { getMoneyStateColor } from '../../src/utils/moneyState';
+import { getMoneyStateLabel } from '../../src/utils/moneyState';
 
 export default function SecureLinksScreen() {
   const router = useRouter();
@@ -16,16 +18,16 @@ export default function SecureLinksScreen() {
   return (
     <Screen>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <Text style={styles.title}>SecureLinks</Text>
-          <Text style={styles.subtitle}>Agreement-backed links from the mock API adapter.</Text>
-        </View>
+        <ScreenHeader
+          title="SecureLinks"
+          subtitle="Agreement-backed links with provider confirmation and readiness states."
+        />
 
         <SafeNotice compact />
 
         <View style={styles.actions}>
-          <Button label="Create SecureLink" onPress={() => router.push('/securelink/create')} />
-          <Button
+          <AppButton label="Create SecureLink" onPress={() => router.push('/securelink/create')} />
+          <AppButton
             label="Create Group SecureLink"
             variant="secondary"
             onPress={() => router.push('/securelink/create-group')}
@@ -50,14 +52,18 @@ export default function SecureLinksScreen() {
                   {link.moneyStateLabel}
                   {link.feeKes ? ` · KES ${link.feeKes} fee` : ''}
                 </Text>
+                {link.reviewHold === 'active' ? (
+                  <Text style={styles.reviewHold}>Review hold active</Text>
+                ) : null}
               </View>
               <View style={styles.rowAside}>
                 <Text style={styles.amount}>
                   {formatCurrency(link.agreementControlledAmount, link.currency)}
                 </Text>
-                <Text style={[styles.state, { color: getMoneyStateColor(link.moneyState) }]}>
-                  {link.moneyState.replaceAll('_', ' ')}
-                </Text>
+                <MoneyStateStatusBadge
+                  state={link.moneyState}
+                  explanation={getMoneyStateLabel(link.moneyState)}
+                />
               </View>
             </Pressable>
           ))
@@ -73,25 +79,12 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     paddingBottom: spacing.xxl,
   },
-  header: {
-    gap: spacing.xs,
-    marginBottom: spacing.sm,
-  },
-  title: {
-    ...typography.title,
-    color: colors.text,
-    fontSize: 30,
-  },
-  subtitle: {
-    ...typography.body,
-    color: colors.textSecondary,
-  },
   actions: {
     gap: spacing.sm,
   },
   row: {
     backgroundColor: colors.surface,
-    borderRadius: 12,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: colors.border,
     padding: spacing.md,
@@ -101,16 +94,16 @@ const styles = StyleSheet.create({
   },
   rowMain: {
     flex: 1,
-    gap: 2,
+    gap: 4,
   },
   rowAside: {
     alignItems: 'flex-end',
-    gap: 4,
+    gap: spacing.xs,
+    maxWidth: '48%',
   },
   kind: {
-    ...typography.caption,
+    ...typography.overline,
     color: colors.primary,
-    fontWeight: '600',
   },
   name: {
     ...typography.label,
@@ -119,14 +112,15 @@ const styles = StyleSheet.create({
   meta: {
     ...typography.caption,
     color: colors.textMuted,
+    lineHeight: 16,
+  },
+  reviewHold: {
+    ...typography.caption,
+    color: colors.reviewHold,
+    fontWeight: '600',
   },
   amount: {
     ...typography.label,
     color: colors.text,
-  },
-  state: {
-    ...typography.caption,
-    textTransform: 'capitalize',
-    fontWeight: '600',
   },
 });
