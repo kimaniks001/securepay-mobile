@@ -1,5 +1,6 @@
-import { ActivityIndicator, ScrollView, StyleSheet, Text } from 'react-native';
+import { ScrollView, StyleSheet, Text } from 'react-native';
 
+import { ApiStatePanel } from '../../src/components/ApiStatePanel';
 import { AppCard } from '../../src/components/AppCard';
 import { ReadinessPanel } from '../../src/components/ReadinessPanel';
 import { SafeNotice } from '../../src/components/SafeNotice';
@@ -21,11 +22,10 @@ export default function PaymentReadyReadinessScreen() {
         <ScreenHeader title="Payment Ready readiness" subtitle="Readiness only — not payout" />
         <SafeNotice />
 
-        {readiness.loading || !readiness.data ? (
-          <ActivityIndicator color={colors.primary} />
-        ) : (
-          <>
-            <ReadinessPanel
+        <ApiStatePanel loading={readiness.loading} error={readiness.error} onRetry={readiness.retry}>
+          {readiness.data ? (
+            <>
+              <ReadinessPanel
               title="Payment Ready readiness"
               items={[
                 {
@@ -52,8 +52,9 @@ export default function PaymentReadyReadinessScreen() {
                 come from the SecurePay API Gateway.
               </Text>
             </AppCard>
-          </>
-        )}
+            </>
+          ) : null}
+        </ApiStatePanel>
       </ScrollView>
     </Screen>
   );

@@ -1,6 +1,6 @@
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { AppCard } from '../../src/components/AppCard';
+import { ApiStatePanel } from '../../src/components/ApiStatePanel';
 import { SafeNotice } from '../../src/components/SafeNotice';
 import { Screen } from '../../src/components/Screen';
 import { ScreenHeader } from '../../src/components/ScreenHeader';
@@ -22,10 +22,14 @@ export default function HistoryScreen() {
 
         <SafeNotice compact />
 
-        {history.loading ? (
-          <ActivityIndicator color={colors.primary} />
-        ) : (
-          history.data?.map((item) => (
+        <ApiStatePanel
+          loading={history.loading}
+          error={history.error}
+          empty={!history.loading && !history.error && !history.data?.length}
+          emptyMessage="No activity records yet."
+          onRetry={history.retry}
+        >
+          {history.data?.map((item) => (
             <View key={item.id} style={styles.row}>
               <View style={styles.rowMain}>
                 <Text style={styles.name}>{item.title}</Text>
@@ -40,8 +44,8 @@ export default function HistoryScreen() {
                 <MoneyStateStatusBadge state={item.moneyState} />
               </View>
             </View>
-          ))
-        )}
+          ))}
+        </ApiStatePanel>
       </ScrollView>
     </Screen>
   );

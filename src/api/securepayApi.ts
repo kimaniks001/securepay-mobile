@@ -1,4 +1,12 @@
-import { apiConfig, assertApiModeAllowed, isMockMode } from './config';
+import {
+  apiConfig,
+  assertApiModeAllowed,
+  getEnvironmentLabel,
+  isApiEnvironmentReady,
+  isMockMode,
+  isStagingMode,
+} from './config';
+import { guardMobileAction } from './mobileActionGuards';
 import {
   mockCreateGroupSecureLinkDraft,
   mockCreateSecureLinkDraft,
@@ -10,6 +18,15 @@ import {
   mockGetSecureLinks,
   mockGetTransactionHistory,
 } from './mockSecurepayApi';
+import {
+  stagingGetAccountReadiness,
+  stagingGetCurrentUser,
+  stagingGetKSNumberProfile,
+  stagingGetPaymentReadyReadiness,
+  stagingGetSecureLinkBySlug,
+  stagingGetSecureLinks,
+  stagingGetTransactionHistory,
+} from './stagingSecurepayApi';
 import type {
   AccountReadiness,
   ApiUser,
@@ -23,87 +40,93 @@ import type {
   SecurePayTransaction,
 } from './types';
 
-async function notImplemented(mode: string): Promise<never> {
-  throw new Error(
-    `${mode} API calls are not enabled in Phase 2. SecurePay mobile uses mock mode by default.`,
-  );
+function useMockBecauseUnsafe(): boolean {
+  return isMockMode();
+}
+
+function useStagingReads(): boolean {
+  return isStagingMode() && isApiEnvironmentReady();
+}
+
+async function guardWriteAttempt(): Promise<void> {
+  const guard = guardMobileAction('release');
+  if (!guard.allowed) {
+    throw new Error(
+      'This action is controlled by SecurePay backend and is not available from the mobile app.',
+    );
+  }
 }
 
 export const securepayApi = {
-  getMode: () => apiConfig.mode,
+  getMode: () => apiConfig.effectiveMode,
+  getRequestedMode: () => apiConfig.requestedMode,
+  getEnvironmentLabel,
+  isReady: () => isApiEnvironmentReady(),
+  getStatusMessage: () => apiConfig.statusMessage,
 
   getCurrentUser: async (): Promise<ApiUser> => {
     assertApiModeAllowed();
-    if (isMockMode()) {
-      return mockGetCurrentUser();
-    }
-    return notImplemented(apiConfig.mode);
+    if (useMockBecauseUnsafe()) return mockGetCurrentUser();
+    if (useStagingReads()) return stagingGetCurrentUser();
+    return mockGetCurrentUser();
   },
 
   getKSNumberProfile: async (): Promise<KSNumberProfile> => {
     assertApiModeAllowed();
-    if (isMockMode()) {
-      return mockGetKSNumberProfile();
-    }
-    return notImplemented(apiConfig.mode);
+    if (useMockBecauseUnsafe()) return mockGetKSNumberProfile();
+    if (useStagingReads()) return stagingGetKSNumberProfile();
+    return mockGetKSNumberProfile();
   },
 
   getSecureLinks: async (): Promise<SecureLinkSummary[]> => {
     assertApiModeAllowed();
-    if (isMockMode()) {
-      return mockGetSecureLinks();
-    }
-    return notImplemented(apiConfig.mode);
+    if (useMockBecauseUnsafe()) return mockGetSecureLinks();
+    if (useStagingReads()) return stagingGetSecureLinks();
+    return mockGetSecureLinks();
   },
 
-  getSecureLinkBySlug: async (slug: string): Promise<SecureLinkDetail | null> => {
+  getSecureLinkBySlug: async (slug: string): Promise<SecureLinkDetail | GroupSecureLinkDetail | null> => {
     assertApiModeAllowed();
-    if (isMockMode()) {
-      return mockGetSecureLinkBySlug(slug);
-    }
-    return notImplemented(apiConfig.mode);
+    if (useMockBecauseUnsafe()) return mockGetSecureLinkBySlug(slug);
+    if (useStagingReads()) return stagingGetSecureLinkBySlug(slug);
+    return mockGetSecureLinkBySlug(slug);
   },
 
   createSecureLinkDraft: async (input: SecureLinkDraftInput): Promise<SecureLinkDetail> => {
     assertApiModeAllowed();
-    if (isMockMode()) {
-      return mockCreateSecureLinkDraft(input);
-    }
-    return notImplemented(apiConfig.mode);
+    await guardWriteAttempt();
+    if (isMockMode()) return mockCreateSecureLinkDraft(input);
+    throw new Error('API writes are disabled in Mobile Phase 3.');
   },
 
   createGroupSecureLinkDraft: async (
     input: GroupSecureLinkDraftInput,
   ): Promise<GroupSecureLinkDetail> => {
     assertApiModeAllowed();
-    if (isMockMode()) {
-      return mockCreateGroupSecureLinkDraft(input);
-    }
-    return notImplemented(apiConfig.mode);
+    await guardWriteAttempt();
+    if (isMockMode()) return mockCreateGroupSecureLinkDraft(input);
+    throw new Error('API writes are disabled in Mobile Phase 3.');
   },
 
   getPaymentReadyReadiness: async (): Promise<PaymentReadyReadiness> => {
     assertApiModeAllowed();
-    if (isMockMode()) {
-      return mockGetPaymentReadyReadiness();
-    }
-    return notImplemented(apiConfig.mode);
+    if (useMockBecauseUnsafe()) return mockGetPaymentReadyReadiness();
+    if (useStagingReads()) return stagingGetPaymentReadyReadiness();
+    return mockGetPaymentReadyReadiness();
   },
 
   getAccountReadiness: async (): Promise<AccountReadiness> => {
     assertApiModeAllowed();
-    if (isMockMode()) {
-      return mockGetAccountReadiness();
-    }
-    return notImplemented(apiConfig.mode);
+    if (useMockBecauseUnsafe()) return mockGetAccountReadiness();
+    if (useStagingReads()) return stagingGetAccountReadiness();
+    return mockGetAccountReadiness();
   },
 
   getTransactionHistory: async (): Promise<SecurePayTransaction[]> => {
     assertApiModeAllowed();
-    if (isMockMode()) {
-      return mockGetTransactionHistory();
-    }
-    return notImplemented(apiConfig.mode);
+    if (useMockBecauseUnsafe()) return mockGetTransactionHistory();
+    if (useStagingReads()) return stagingGetTransactionHistory();
+    return mockGetTransactionHistory();
   },
 };
 

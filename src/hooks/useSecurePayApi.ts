@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
+import { getEnvironmentLabel, isApiEnvironmentReady } from '../api/config';
 import { securepayApi } from '../api/securepayApi';
 import type {
   AccountReadiness,
@@ -9,17 +10,22 @@ import type {
   SecurePayTransaction,
 } from '../api/types';
 
-type LoadState<T> = {
+export type ApiLoadState<T> = {
   data: T | null;
   loading: boolean;
   error: string | null;
+  modeLabel: string;
+  isEnvironmentReady: boolean;
   refresh: () => Promise<void>;
+  retry: () => Promise<void>;
 };
 
-function useApiResource<T>(loader: () => Promise<T>): LoadState<T> {
+function useApiResource<T>(loader: () => Promise<T>): ApiLoadState<T> {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const modeLabel = getEnvironmentLabel();
+  const isEnvironmentReady = isApiEnvironmentReady();
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -29,16 +35,19 @@ function useApiResource<T>(loader: () => Promise<T>): LoadState<T> {
       setData(result);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to load data');
+      setData(null);
     } finally {
       setLoading(false);
     }
   }, [loader]);
 
+  const retry = refresh;
+
   useEffect(() => {
     refresh();
   }, [refresh]);
 
-  return { data, loading, error, refresh };
+  return { data, loading, error, modeLabel, isEnvironmentReady, refresh, retry };
 }
 
 export function useKSNumberProfile() {
@@ -59,4 +68,14 @@ export function useAccountReadiness() {
 
 export function usePaymentReadyReadiness() {
   return useApiResource<PaymentReadyReadiness>(() => securepayApi.getPaymentReadyReadiness());
+}
+
+export function useApiEnvironment() {
+  return {
+    mode: securepayApi.getMode(),
+    requestedMode: securepayApi.getRequestedMode(),
+    environmentLabel: securepayApi.getEnvironmentLabel(),
+    isReady: securepayApi.isReady(),
+    statusMessage: securepayApi.getStatusMessage(),
+  };
 }

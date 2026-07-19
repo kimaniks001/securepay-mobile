@@ -126,7 +126,7 @@ export async function mockGetTransactionHistory(): Promise<SecurePayTransaction[
 
 export function getMockCatalogForDebug() {
   return {
-    mode: apiConfig.mode,
+    mode: apiConfig.effectiveMode,
     secureLinks: mockSecureLinkSummaries.length,
     groupSecureLinks: mockGroupSecureLinkDetails.length,
     transactions: mockTransactions.length,

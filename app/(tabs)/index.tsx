@@ -1,9 +1,11 @@
 import { useRouter } from 'expo-router';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { AgreementFlowCard } from '../../src/components/AgreementFlowCard';
 import { AppButton } from '../../src/components/AppButton';
+import { ApiStatePanel } from '../../src/components/ApiStatePanel';
 import { AppCard } from '../../src/components/AppCard';
+import { EnvironmentBanner } from '../../src/components/EnvironmentBanner';
 import { MoneyStateCard } from '../../src/components/MoneyStateCard';
 import { ReadinessPanel } from '../../src/components/ReadinessPanel';
 import { SafeNotice } from '../../src/components/SafeNotice';
@@ -47,6 +49,8 @@ export default function HomeScreen() {
 
         <SafeNotice message="This mobile build does not confirm payments, release money, withdraw funds, or move money directly." />
 
+        <EnvironmentBanner compact />
+
         <AppCard>
           <MoneyStateCard
             title="Demo balance / placeholder only"
@@ -59,14 +63,10 @@ export default function HomeScreen() {
         </AppCard>
 
         <AppCard title="My KSNumber" subtitle="Identity placeholder">
-          {profile.loading ? (
-            <ActivityIndicator color={colors.primary} />
-          ) : (
-            <>
-              <InfoRow label="KSNumber" value={profile.data?.ksNumber ?? user?.ksNumber ?? '—'} />
-              <InfoRow label="Display name" value={profile.data?.displayName ?? user?.name ?? '—'} />
-            </>
-          )}
+          <ApiStatePanel loading={profile.loading} error={profile.error} onRetry={profile.retry}>
+            <InfoRow label="KSNumber" value={profile.data?.ksNumber ?? user?.ksNumber ?? '—'} />
+            <InfoRow label="Display name" value={profile.data?.displayName ?? user?.name ?? '—'} />
+          </ApiStatePanel>
         </AppCard>
 
         <View style={styles.quickGrid}>
@@ -82,28 +82,35 @@ export default function HomeScreen() {
           />
         </View>
 
-        {readiness.data && paymentReady.data ? (
-          <ReadinessPanel
-            title="Readiness"
-            subtitle="Readiness only — not payout"
-            items={[
-              {
-                label: 'Payment Ready readiness',
-                value: paymentReady.data.label,
-                state: paymentReady.data.status,
-                explanation: paymentReady.data.summary,
-              },
-              {
-                label: 'Account readiness',
-                value: readiness.data.label,
-                state: readiness.data.status,
-                explanation: readiness.data.summary,
-              },
-            ]}
-          />
-        ) : (
-          <ActivityIndicator color={colors.primary} />
-        )}
+        <ApiStatePanel
+          loading={readiness.loading || paymentReady.loading}
+          error={readiness.error ?? paymentReady.error}
+          onRetry={() => {
+            void readiness.retry();
+            void paymentReady.retry();
+          }}
+        >
+          {readiness.data && paymentReady.data ? (
+            <ReadinessPanel
+              title="Readiness"
+              subtitle="Readiness only — not payout"
+              items={[
+                {
+                  label: 'Payment Ready readiness',
+                  value: paymentReady.data.label,
+                  state: paymentReady.data.status,
+                  explanation: paymentReady.data.summary,
+                },
+                {
+                  label: 'Account readiness',
+                  value: readiness.data.label,
+                  state: readiness.data.status,
+                  explanation: readiness.data.summary,
+                },
+              ]}
+            />
+          ) : null}
+        </ApiStatePanel>
 
         <AgreementFlowCard subtitle="Aligned with the public SecurePay site — mobile shows readiness only." />
 
@@ -118,10 +125,14 @@ export default function HomeScreen() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Recent activity</Text>
-          {history.loading ? (
-            <ActivityIndicator color={colors.primary} />
-          ) : (
-            recentActivity.map((item) => (
+          <ApiStatePanel
+            loading={history.loading}
+            error={history.error}
+            empty={!history.data?.length}
+            emptyMessage="No recent activity yet."
+            onRetry={history.retry}
+          >
+            {recentActivity.map((item) => (
               <View key={item.id} style={styles.activityRow}>
                 <View style={styles.activityMain}>
                   <Text style={styles.activityTitle}>{item.title}</Text>
@@ -136,8 +147,8 @@ export default function HomeScreen() {
                   <MoneyStateStatusBadge state={item.moneyState} />
                 </View>
               </View>
-            ))
-          )}
+            ))}
+          </ApiStatePanel>
         </View>
       </ScrollView>
     </Screen>
