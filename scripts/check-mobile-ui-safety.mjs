@@ -15,9 +15,16 @@ const forbiddenPhrases = [
   'instant payout',
   'payment completed',
   'money released',
+  'funds released',
   'send money instantly',
   'ready to withdraw',
   'ready for payout',
+  'fake payment complete',
+  'escrow',
+  'frozen',
+  'custody',
+  'guaranteed payout',
+  'settlement complete',
 ];
 
 function walk(dir, files = []) {

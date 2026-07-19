@@ -3,10 +3,10 @@ import { Platform } from 'react-native';
 export const shadows = {
   card: Platform.select({
     ios: {
-      shadowColor: '#1A2E22',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.06,
-      shadowRadius: 12,
+      shadowColor: '#1C2B24',
+      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: 0.05,
+      shadowRadius: 16,
     },
     android: {
       elevation: 2,
@@ -15,13 +15,25 @@ export const shadows = {
   }),
   soft: Platform.select({
     ios: {
-      shadowColor: '#1A2E22',
+      shadowColor: '#1C2B24',
       shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.04,
-      shadowRadius: 8,
+      shadowOpacity: 0.03,
+      shadowRadius: 10,
     },
     android: {
       elevation: 1,
+    },
+    default: {},
+  }),
+  cta: Platform.select({
+    ios: {
+      shadowColor: '#E85D04',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.12,
+      shadowRadius: 10,
+    },
+    android: {
+      elevation: 3,
     },
     default: {},
   }),

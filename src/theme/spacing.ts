@@ -6,4 +6,5 @@ export const spacing = {
   xl: 32,
   xxl: 48,
   touch: 52,
+  section: 40,
 } as const;

@@ -1,15 +1,15 @@
 export const typography = {
   display: {
-    fontSize: 34,
+    fontSize: 36,
     fontWeight: '700' as const,
-    letterSpacing: -0.8,
-    lineHeight: 40,
+    letterSpacing: -1,
+    lineHeight: 42,
   },
   title: {
-    fontSize: 28,
+    fontSize: 30,
     fontWeight: '700' as const,
-    letterSpacing: -0.5,
-    lineHeight: 34,
+    letterSpacing: -0.6,
+    lineHeight: 36,
   },
   heading: {
     fontSize: 20,
@@ -21,10 +21,15 @@ export const typography = {
     fontWeight: '400' as const,
     lineHeight: 24,
   },
+  bodyLarge: {
+    fontSize: 18,
+    fontWeight: '400' as const,
+    lineHeight: 28,
+  },
   caption: {
     fontSize: 13,
     fontWeight: '400' as const,
-    lineHeight: 18,
+    lineHeight: 19,
   },
   label: {
     fontSize: 14,
@@ -34,7 +39,7 @@ export const typography = {
   overline: {
     fontSize: 11,
     fontWeight: '600' as const,
-    letterSpacing: 0.8,
+    letterSpacing: 0.9,
     lineHeight: 14,
     textTransform: 'uppercase' as const,
   },

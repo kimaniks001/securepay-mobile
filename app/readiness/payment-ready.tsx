@@ -6,18 +6,11 @@ import { SafeNotice } from '../../src/components/SafeNotice';
 import { Screen } from '../../src/components/Screen';
 import { ScreenHeader } from '../../src/components/ScreenHeader';
 import { readinessJourney } from '../../src/doctrine/mobileJourneyMap';
+import { safeReadinessLabels } from '../../src/doctrine/publicSiteReference';
 import { colors, spacing, typography } from '../../src/theme';
 import { usePaymentReadyReadiness } from '../../src/hooks/useSecurePayApi';
 
-const readinessLabels = [
-  'Ready for staging review',
-  'Not ready',
-  'Governance incomplete',
-  'Review hold active',
-  'Settlement readiness pending',
-  'Ledger posting pending',
-  'Provider confirmation pending',
-] as const;
+const readinessLabels = safeReadinessLabels;
 
 export default function PaymentReadyReadinessScreen() {
   const readiness = usePaymentReadyReadiness();
