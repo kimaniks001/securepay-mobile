@@ -13,8 +13,9 @@ Cross-platform mobile client for SecurePay, built with **Expo SDK 57** and **Rea
 | **2B** | Bolt UI alignment — theme, components, journeys, navigation labels |
 | **2C-Lite (merged)** | Public site look-and-feel — [securepay.securepay4businessdemo.live](https://securepay.securepay4businessdemo.live/) |
 | **3 (merged)** | Staging read-only API Gateway integration |
-| **4 (current)** | Staging API contract + auth session foundation |
-| **5 (next)** | Confirmed contract, draft writes, production readiness gate |
+| **4 (merged)** | Staging API contract + auth session foundation |
+| **5 (current)** | API contract confirmation tooling + staging smoke tests |
+| **6 (next)** | Securepaymain route confirmation, draft writes, production gate |
 
 ## Phase 2 — Doctrine alignment
 
@@ -153,6 +154,71 @@ Phase 4 documents the assumed SecurePay staging API contract, adds safe auth/ses
 - Auth POST is the only non-GET HTTP allowed
 - SecurePay API Gateway is the only integration path
 
+## Phase 5 — API contract confirmation and staging smoke tests
+
+Phase 5 adds contract confirmation **tooling** without falsely marking routes as confirmed. Securepaymain was **not available locally** — all routes remain **assumed**.
+
+### What Phase 5 adds
+
+- `docs/MOBILE_PHASE_5_API_CONTRACT_CONFIRMATION_STAGING_SMOKE_TESTS.md`
+- Updated `docs/MOBILE_STAGING_API_CONTRACT_CHECKLIST.md` — 0 confirmed routes
+- `src/api/endpoints.ts` — `confirmedReadEndpoints` (empty) vs `assumedReadEndpoints`
+- `src/api/fixtures/` — contract fixtures for mapper tests
+- `src/api/mapperContractChecks.ts` — fixture-based mapper validation
+- `scripts/mobile-staging-readonly-smoke.mjs` — local staging GET smoke test
+- `scripts/check-api-contract-mappers.mjs` — wrapper for mapper checks
+- `stagingGetSecureLinkEvidence()` — read-only API function (UI not wired until confirmed)
+
+### Confirmed vs assumed endpoints
+
+| Category | Phase 5 status |
+|----------|----------------|
+| **Confirmed** | 0 — Securepaymain not available locally |
+| **Assumed** | All read + auth routes from Phase 4 |
+| **Missing** | Evidence detail; evidence UI not wired |
+| **Blocked** | Money/provider/ledger/internal routes |
+| **Future** | Draft SecureLink creation |
+
+### Inspect Securepaymain (when available)
+
+```bash
+# Clone beside mobile repo, then search:
+cd ../Securepaymain
+rg -i "openapi|swagger|/api/v1/auth|secure-links|readiness|evidence" .
+```
+
+Update `confirmedReadEndpoints` and checklist only with source evidence.
+
+### Run mock mode (default)
+
+```bash
+npm install
+npm start
+```
+
+### Run mapper contract checks (no staging required)
+
+```bash
+npm run check:api-contract
+```
+
+### Run staging read-only smoke test (local developer machine only)
+
+```bash
+# Never commit these values
+export EXPO_PUBLIC_SECUREPAY_API_MODE=staging
+export EXPO_PUBLIC_SECUREPAY_API_BASE_URL=https://your-approved-staging-gateway.example
+export SECUREPAY_SMOKE_ACCESS_TOKEN=your-local-bearer-token   # optional
+export SECUREPAY_SMOKE_TEST_SLUG=your-test-slug             # optional
+
+npm run smoke:staging-readonly
+# Report: logs/mobile-staging-smoke-report.local.json (gitignored)
+```
+
+### Cloud Agent / secrets warning
+
+Never provide Cloud Agents with staging tokens, production credentials, or real `.env` files. Smoke tests and staging sign-in require **local developer-provided** values only.
+
 ## What this app does NOT do
 
 - No real payments or fake payment success
@@ -194,6 +260,7 @@ npm start
 ```bash
 npm run typecheck
 npm run check:ui-safety
+npm run check:api-contract
 ```
 
 ## Project structure

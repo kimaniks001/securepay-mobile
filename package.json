@@ -9,6 +9,8 @@
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
     "check:ui-safety": "node scripts/check-mobile-ui-safety.mjs",
+    "check:api-contract": "node scripts/check-api-contract-mappers.mjs",
+    "smoke:staging-readonly": "node scripts/mobile-staging-readonly-smoke.mjs",
     "sync:web-reference": "bash scripts/clone-web-reference.sh",
     "diff:web-mobile": "node scripts/diff-web-mobile-alignment.mjs",
     "wire:web-reference": "npm run sync:web-reference && npm run diff:web-mobile"

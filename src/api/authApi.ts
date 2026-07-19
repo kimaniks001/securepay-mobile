@@ -1,6 +1,6 @@
 import { getSafeErrorMessage, toThrownError } from './apiErrors';
 import { apiConfig, isMockMode, isStagingMode } from './config';
-import { authEndpoints } from './endpoints';
+import { assumedAuthEndpoints } from './endpoints';
 import { httpPostAuth } from './httpClient';
 import { clearLastApiError } from './lastApiError';
 import { MOCK_KS_NUMBER } from '../mocks/mockProfile';
@@ -99,7 +99,8 @@ export async function loginWithStagingCredentials(input: AuthLoginInput): Promis
     );
   }
 
-  const response = await httpPostAuth<StagingAuthResponse>(authEndpoints.login, {
+  // Auth route remains ASSUMED until confirmed against Securepaymain OpenAPI.
+  const response = await httpPostAuth<StagingAuthResponse>(assumedAuthEndpoints.login, {
     email: input.email.trim().toLowerCase(),
     pin: input.pin,
   });
@@ -156,7 +157,7 @@ export async function refreshSession(): Promise<MobileSession | null> {
     return current;
   }
 
-  const response = await httpPostAuth<StagingAuthResponse>(authEndpoints.refresh, {
+  const response = await httpPostAuth<StagingAuthResponse>(assumedAuthEndpoints.refresh, {
     refresh_token: current.refreshToken,
   });
 

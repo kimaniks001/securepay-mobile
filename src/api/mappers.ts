@@ -13,6 +13,8 @@ import type {
   SecureLinkKind,
   SecureLinkSummary,
   SecurePayTransaction,
+  SecureLinkEvidenceItem,
+  SecureLinkEvidenceList,
   SettlementReadinessStatus,
 } from './types';
 import { feeDoctrine } from '../doctrine/securepayDoctrine';
@@ -421,4 +423,28 @@ export function mapTransactionHistory(raw: unknown): SecurePayTransaction[] {
     return items.map(mapTransaction);
   }
   return [];
+}
+
+export function mapEvidenceItem(raw: unknown): SecureLinkEvidenceItem {
+  const record = normalizeDtoRecord(raw);
+  return {
+    id: asString(pickField(record, 'id'), `ev_${Date.now()}`),
+    label: asString(pickField(record, 'label', 'title', 'name'), 'Evidence item'),
+    kind: asString(pickField(record, 'kind', 'type'), 'document'),
+    status: asString(pickField(record, 'status', 'state'), 'unknown'),
+    submittedAt: asString(pickField(record, 'submitted_at', 'submittedAt')) || undefined,
+    note: asString(pickField(record, 'note', 'description')) || undefined,
+  };
+}
+
+export function mapEvidenceList(raw: unknown, secureLinkSlug?: string): SecureLinkEvidenceList {
+  if (Array.isArray(raw)) {
+    return { items: raw.map(mapEvidenceItem), secureLinkSlug };
+  }
+  const record = asRecord(raw);
+  const items = record?.items ?? record?.data ?? record?.evidence;
+  if (Array.isArray(items)) {
+    return { items: items.map(mapEvidenceItem), secureLinkSlug };
+  }
+  return { items: [], secureLinkSlug };
 }

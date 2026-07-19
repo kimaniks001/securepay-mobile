@@ -1,0 +1,9 @@
+{
+  "money_state": "provider_confirmed",
+  "group_tier": "welfare",
+  "collection_contribution_summary": {
+    "expected_contributions": 8,
+    "recorded_contributions": 3,
+    "fee_per_contribution_kes": 10
+  }
+}

@@ -83,8 +83,11 @@ function readApiSafetyFiles() {
   if (!endpoints.includes('webhook-complete') || !endpoints.includes('auto-payout')) {
     throw new Error('forbiddenMoneyActionEndpoints must block webhook-complete and auto-payout');
   }
-  if (!endpoints.includes('authEndpoints')) {
-    throw new Error('endpoints.ts must define authEndpoints');
+  if (!endpoints.includes('assumedReadEndpoints') || !endpoints.includes('confirmedReadEndpoints')) {
+    throw new Error('endpoints.ts must separate confirmed vs assumed read endpoints');
+  }
+  if (!endpoints.includes('assumedAuthEndpoints')) {
+    throw new Error('endpoints.ts must define assumedAuthEndpoints');
   }
 
   const sessionStorage = fs.readFileSync(path.join(root, 'src/api/sessionStorage.ts'), 'utf8');
@@ -137,6 +140,34 @@ function readApiSafetyFiles() {
   const stagingApi = path.join(root, 'src/api/stagingSecurepayApi.ts');
   if (!fs.existsSync(stagingApi)) {
     throw new Error('stagingSecurepayApi.ts is required for Phase 3+');
+  }
+
+  const fixtures = path.join(root, 'src/api/fixtures/index.ts');
+  if (!fs.existsSync(fixtures)) {
+    throw new Error('src/api/fixtures is required for Phase 5');
+  }
+
+  const mapperChecks = path.join(root, 'src/api/mapperContractChecks.ts');
+  if (!fs.existsSync(mapperChecks)) {
+    throw new Error('mapperContractChecks.ts is required for Phase 5');
+  }
+
+  const fixtureJson = path.join(root, 'src/api/fixtures/secureLinkList.fixture.json');
+  if (!fs.existsSync(fixtureJson)) {
+    throw new Error('JSON fixtures required for Phase 5 mapper checks');
+  }
+
+  const smokeScript = fs.readFileSync(path.join(root, 'scripts/mobile-staging-readonly-smoke.mjs'), 'utf8');
+  if (!smokeScript.includes('production securepay.ke URL blocked')) {
+    throw new Error('smoke-test script must refuse production URL by default');
+  }
+  if (!smokeScript.includes("method: 'GET'")) {
+    throw new Error('smoke-test script must use GET only for read endpoints');
+  }
+
+  const gitignore = fs.readFileSync(path.join(root, '.gitignore'), 'utf8');
+  if (!gitignore.includes('logs/') || !gitignore.includes('.env')) {
+    throw new Error('.gitignore must ignore logs/ and .env');
   }
 }
 

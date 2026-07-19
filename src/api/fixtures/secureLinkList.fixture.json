@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "id": "sl_fixture_001",
+      "slug": "fixture-welfare-group",
+      "title": "Fixture Welfare Group",
+      "kind": "group_securelink",
+      "group_tier": "welfare",
+      "agreement_controlled_amount": 5000,
+      "money_state": "awaiting_payment",
+      "fee_kes": 10,
+      "review_hold": "none"
+    }
+  ]
+}
