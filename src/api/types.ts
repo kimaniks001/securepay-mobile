@@ -34,7 +34,7 @@ export type KSNumberProfile = {
   email: string;
   phone?: string;
   accountReadiness: AccountReadiness;
-  isDemo: true;
+  isDemo?: boolean;
 };
 
 export type AccountReadiness = {
@@ -76,7 +76,7 @@ export type SecureLinkDetail = SecureLinkSummary & {
   providerConfirmedAt?: string;
   settlementReadiness: SettlementReadinessStatus;
   paymentReadyReadiness: PaymentReadyReadiness;
-  isDemo: true;
+  isDemo?: boolean;
 };
 
 export type GroupSecureLinkDetail = SecureLinkDetail & {

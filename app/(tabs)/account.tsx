@@ -1,14 +1,16 @@
 import { useRouter } from 'expo-router';
-import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { AppButton } from '../../src/components/AppButton';
+import { ApiStatePanel } from '../../src/components/ApiStatePanel';
 import { AppCard } from '../../src/components/AppCard';
+import { EnvironmentBanner } from '../../src/components/EnvironmentBanner';
 import { ReadinessPanel } from '../../src/components/ReadinessPanel';
 import { SafeNotice } from '../../src/components/SafeNotice';
 import { Screen } from '../../src/components/Screen';
 import { ScreenHeader } from '../../src/components/ScreenHeader';
 import { STAGING_DEMO_WARNING } from '../../src/doctrine/securepayDoctrine';
-import { isMockMode } from '../../src/api/config';
+import { useApiEnvironment } from '../../src/hooks/useSecurePayApi';
 import { colors, spacing, typography } from '../../src/theme';
 import { useAuth } from '../../src/hooks/useAuth';
 import { useAccountReadiness, useKSNumberProfile } from '../../src/hooks/useSecurePayApi';
@@ -19,6 +21,7 @@ export default function AccountScreen() {
   const { user, signOut } = useAuth();
   const profile = useKSNumberProfile();
   const readiness = useAccountReadiness();
+  const apiEnvironment = useApiEnvironment();
 
   async function showSecurityStatus() {
     const capability = await getBiometricCapability();
@@ -27,7 +30,7 @@ export default function AccountScreen() {
       [
         `Biometric login: ${capability.isAvailable ? 'Ready' : 'Not ready'}`,
         `Secure storage: Expo SecureStore (keychain)`,
-        `Environment mode: ${isMockMode() ? 'mock (default)' : 'configured'}`,
+        `Environment mode: ${apiEnvironment.environmentLabel}`,
       ].join('\n'),
     );
   }
@@ -46,6 +49,8 @@ export default function AccountScreen() {
         />
         <Text style={styles.demoWarning}>{STAGING_DEMO_WARNING}</Text>
 
+        <EnvironmentBanner />
+
         <SafeNotice compact />
 
         <AppCard title={user?.name ?? 'SecurePay user'} subtitle={user?.email}>
@@ -54,8 +59,12 @@ export default function AccountScreen() {
           <InfoRow label="Activation status" value="Placeholder — pending backend" />
         </AppCard>
 
-        {readiness.loading || !readiness.data ? (
-          <ActivityIndicator color={colors.primary} />
+        {readiness.loading || readiness.error || !readiness.data ? (
+          <ApiStatePanel
+            loading={readiness.loading}
+            error={readiness.error}
+            onRetry={readiness.retry}
+          />
         ) : (
           <ReadinessPanel
             title="Readiness"
@@ -98,7 +107,7 @@ export default function AccountScreen() {
         <AppCard title="Device security">
           <InfoRow label="Biometric login" value="Available when enrolled" />
           <InfoRow label="Secure storage" value="Expo SecureStore" />
-          <InfoRow label="API mode" value={isMockMode() ? 'mock' : 'configured'} />
+          <InfoRow label="API mode" value={apiEnvironment.environmentLabel} />
         </AppCard>
 
         <View style={styles.actions}>

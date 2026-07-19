@@ -1,5 +1,6 @@
-import { ActivityIndicator, ScrollView, StyleSheet, Text } from 'react-native';
+import { ScrollView, StyleSheet, Text } from 'react-native';
 
+import { ApiStatePanel } from '../../src/components/ApiStatePanel';
 import { AppCard } from '../../src/components/AppCard';
 import { ReadinessPanel } from '../../src/components/ReadinessPanel';
 import { SafeNotice } from '../../src/components/SafeNotice';
@@ -16,14 +17,13 @@ export default function AccountReadinessScreen() {
   return (
     <Screen>
       <ScrollView contentContainerStyle={styles.content}>
-        <ScreenHeader title="Account readiness" subtitle="Mock API · backend is source of truth" />
+        <ScreenHeader title="Account readiness" subtitle="Read-only via SecurePay API adapter" />
         <SafeNotice />
 
-        {readiness.loading || !readiness.data ? (
-          <ActivityIndicator color={colors.primary} />
-        ) : (
-          <>
-            <ReadinessPanel
+        <ApiStatePanel loading={readiness.loading} error={readiness.error} onRetry={readiness.retry}>
+          {readiness.data ? (
+            <>
+              <ReadinessPanel
               title="Account readiness"
               items={[
                 { label: 'KSNumber', value: 'KS-2026-0042', explanation: accountReadinessJourney.steps[0].explanation },
@@ -37,8 +37,9 @@ export default function AccountReadinessScreen() {
                 SecurePay Wallet is not live. Not available for withdrawal. Backend controls all money state.
               </Text>
             </AppCard>
-          </>
-        )}
+            </>
+          ) : null}
+        </ApiStatePanel>
       </ScrollView>
     </Screen>
   );

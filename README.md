@@ -11,9 +11,9 @@ Cross-platform mobile client for SecurePay, built with **Expo SDK 57** and **Rea
 | **1 (merged)** | Expo shell, Welcome/Login/Home/Pay/History/Profile, secure storage, biometrics, mock balance |
 | **2 (merged)** | Doctrine alignment, API adapter, mock SecureLinks, readiness screens, safe copy |
 | **2B** | Bolt UI alignment — theme, components, journeys, navigation labels |
-| **2C-Lite (current)** | Public site look-and-feel — [securepay.securepay4businessdemo.live](https://securepay.securepay4businessdemo.live/) |
-| **3 (next)** | Live SecurePay API Gateway integration (staging) |
-| **4** | Production hardening, audit, app store release |
+| **2C-Lite (merged)** | Public site look-and-feel — [securepay.securepay4businessdemo.live](https://securepay.securepay4businessdemo.live/) |
+| **3 (current)** | Staging read-only API Gateway integration |
+| **4 (next)** | Authenticated staging writes, production hardening, app store release |
 
 ## Phase 2 — Doctrine alignment
 
@@ -80,6 +80,41 @@ Public site is the reference until the Bolt repo (`securepaymain`) is available 
 - No direct provider integrations
 - Backend remains source of truth
 
+## Phase 3 — Staging read-only API Gateway integration
+
+Mobile Phase 3 adds a **read-only staging layer** through the SecurePay API Gateway. The app remains a client only.
+
+### What Phase 3 adds
+
+- `docs/MOBILE_PHASE_3_STAGING_READONLY_API_GATEWAY_INTEGRATION.md`
+- `src/api/config.ts` — `mock` / `staging` / `production_disabled` with validation
+- `src/api/httpClient.ts` — GET-only gateway client with typed errors
+- `src/api/stagingSecurepayApi.ts` — read-only staging reads with mock fallback
+- `src/api/endpoints.ts`, `mappers.ts`, `mobileActionGuards.ts`, `sessionStorage.ts`
+- `EnvironmentBanner` and `ApiStatePanel` for environment and data states
+
+### Run in mock mode (default)
+
+```bash
+npm install
+npm start
+```
+
+### Run in staging read-only mode
+
+Create `.env.local` (gitignored):
+
+```bash
+EXPO_PUBLIC_SECUREPAY_API_MODE=staging
+EXPO_PUBLIC_SECUREPAY_API_BASE_URL=https://your-approved-staging-gateway.example
+EXPO_PUBLIC_SECUREPAY_ENABLE_API_WRITES=false
+EXPO_PUBLIC_SECUREPAY_ALLOW_PRODUCTION_API=false
+```
+
+### Cloud Agent / secrets warning
+
+Do **not** provide Cloud Agents with production tokens, staging internal tokens, Choice Bank credentials, database credentials, customer data, real `.env` files, `INTERNAL_TOKEN`, or provider secrets. Use placeholders only.
+
 ## What this app does NOT do
 
 - No real payments or fake payment success
@@ -91,19 +126,15 @@ Public site is the reference until the Bolt repo (`securepaymain`) is available 
 
 ## API mode
 
+See **Phase 3** above for full environment setup. Summary:
+
 | Mode | Default | Behavior |
 | --- | --- | --- |
 | `mock` | **Yes** | All API calls return local mock data |
-| `staging` | No | Reserved for Phase 3 — requires `EXPO_PUBLIC_SECUREPAY_API_BASE_URL` |
-| `production` | Disabled | Blocked unless explicitly configured in a future phase |
+| `staging` | No | Read-only GET via SecurePay API Gateway |
+| `production` | Disabled | Blocked in Mobile Phase 3 |
 
-Optional environment variables (not committed):
-
-```bash
-# .env.local (create locally — never commit)
-EXPO_PUBLIC_SECUREPAY_API_MODE=mock
-# EXPO_PUBLIC_SECUREPAY_API_BASE_URL=https://staging-api.securepay.example
-```
+Optional environment variables (not committed) — see `.env.example`.
 
 ## Getting started
 
@@ -138,7 +169,7 @@ app/
   login.tsx
 src/
   theme/                # SecurePay design tokens (Phase 2B)
-  api/                  # SecurePay API adapter (mock default)
+  api/                  # SecurePay API adapter (mock default, staging read-only)
   doctrine/             # Doctrine, journey map, UI text guard
   mocks/                # Mock SecureLinks, profile, transactions
   components/           # UI + SafeNotice

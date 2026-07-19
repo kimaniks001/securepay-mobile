@@ -5,9 +5,9 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(__dirname, '..');
-const scanDirs = ['app', 'src/components', 'src/doctrine'];
-const forbiddenButtonLabels = [/withdraw/i, /release/i, /payout/i, /cash out/i, /confirm payment/i];
-const requiredSnippets = ['SecureLink', 'Group SecureLink', 'KES 10', 'KES 20', 'mock'];
+const scanDirs = ['app', 'src/components', 'src/doctrine', 'src/api'];
+const forbiddenButtonLabels = [/withdraw/i, /release/i, /payout/i, /cash out/i, /confirm payment/i, /ledger posting/i, /provider confirmation/i];
+const requiredSnippets = ['SecureLink', 'Group SecureLink', 'KES 10', 'KES 20', 'mock', 'staging'];
 
 const forbiddenPhrases = [
   'withdraw now',
@@ -47,6 +47,51 @@ function readConfigMode() {
   if (!config.includes("return 'mock'")) {
     throw new Error('API config must default to mock mode');
   }
+  if (!config.includes('production_disabled')) {
+    throw new Error('API config must disable production in Phase 3');
+  }
+  if (!config.includes('EXPO_PUBLIC_SECUREPAY_ENABLE_API_WRITES')) {
+    throw new Error('API config must reject API writes in Phase 3');
+  }
+  if (!config.includes('securepay.ke')) {
+    throw new Error('API config must reject production securepay.ke URLs by default');
+  }
+}
+
+function readApiSafetyFiles() {
+  const guards = fs.readFileSync(path.join(root, 'src/api/mobileActionGuards.ts'), 'utf8');
+  const requiredGuardActions = [
+    'release',
+    'withdrawal',
+    'payout',
+    'provider_confirmation',
+    'ledger_posting',
+  ];
+  for (const action of requiredGuardActions) {
+    if (!guards.includes(`'${action}'`)) {
+      throw new Error(`mobileActionGuards must block ${action}`);
+    }
+  }
+
+  const httpClient = fs.readFileSync(path.join(root, 'src/api/httpClient.ts'), 'utf8');
+  if (!httpClient.includes("method !== 'GET'")) {
+    throw new Error('httpClient must block non-GET requests in Phase 3');
+  }
+
+  const secureLinksScreen = fs.readFileSync(path.join(root, 'app/(tabs)/securelinks.tsx'), 'utf8');
+  if (!secureLinksScreen.includes('ApiStatePanel')) {
+    throw new Error('SecureLinks screen must handle loading/error/empty states');
+  }
+
+  const paymentReadyScreen = fs.readFileSync(path.join(root, 'app/readiness/payment-ready.tsx'), 'utf8');
+  if (!paymentReadyScreen.includes('not payout')) {
+    throw new Error('Payment Ready screen must not show payout-ready language');
+  }
+
+  const stagingApi = path.join(root, 'src/api/stagingSecurepayApi.ts');
+  if (!fs.existsSync(stagingApi)) {
+    throw new Error('stagingSecurepayApi.ts is required for Phase 3');
+  }
 }
 
 let failed = false;
@@ -58,7 +103,13 @@ for (const phrase of forbiddenPhrases) {
   const regex = new RegExp(phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
   for (const file of allFiles) {
     const content = fs.readFileSync(file, 'utf8');
-    if (regex.test(content) && !file.includes('uiTextGuard') && !file.includes('securepayDoctrine')) {
+    if (
+      regex.test(content) &&
+      !file.includes('uiTextGuard') &&
+      !file.includes('securepayDoctrine') &&
+      !file.includes('mobileActionGuards') &&
+      !file.includes('endpoints.ts')
+    ) {
       console.error(`Forbidden phrase "${phrase}" found in ${path.relative(root, file)}`);
       failed = true;
     }
@@ -91,6 +142,7 @@ for (const snippet of requiredSnippets) {
 
 try {
   readConfigMode();
+  readApiSafetyFiles();
 } catch (error) {
   console.error(error instanceof Error ? error.message : String(error));
   failed = true;
@@ -110,4 +162,4 @@ if (failed) {
   process.exit(1);
 }
 
-console.log('Mobile UI safety checks passed.');
+console.log('Mobile UI and API safety checks passed.');

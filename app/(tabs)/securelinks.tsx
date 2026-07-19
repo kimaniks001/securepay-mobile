@@ -1,7 +1,8 @@
 import { useRouter } from 'expo-router';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { AppButton } from '../../src/components/AppButton';
+import { ApiStatePanel } from '../../src/components/ApiStatePanel';
 import { SafeNotice } from '../../src/components/SafeNotice';
 import { Screen } from '../../src/components/Screen';
 import { ScreenHeader } from '../../src/components/ScreenHeader';
@@ -34,10 +35,16 @@ export default function SecureLinksScreen() {
           />
         </View>
 
-        {links.loading ? (
-          <ActivityIndicator color={colors.primary} />
+        {links.loading || links.error || !links.data?.length ? (
+          <ApiStatePanel
+            loading={links.loading}
+            error={links.error}
+            empty={!links.loading && !links.error && !links.data?.length}
+            emptyMessage="No SecureLinks yet. Create a draft to get started."
+            onRetry={links.retry}
+          />
         ) : (
-          links.data?.map((link) => (
+          links.data.map((link) => (
             <Pressable
               key={link.id}
               style={styles.row}
