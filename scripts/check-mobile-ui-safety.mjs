@@ -66,6 +66,9 @@ function readApiSafetyFiles() {
     'payout',
     'provider_confirmation',
     'ledger_posting',
+    'create_payment_success',
+    'internal_webhook_complete',
+    'internal_ledger_posting',
   ];
   for (const action of requiredGuardActions) {
     if (!guards.includes(`'${action}'`)) {
@@ -73,9 +76,52 @@ function readApiSafetyFiles() {
     }
   }
 
+  const endpoints = fs.readFileSync(path.join(root, 'src/api/endpoints.ts'), 'utf8');
+  if (!endpoints.includes('forbiddenMoneyActionEndpoints')) {
+    throw new Error('endpoints.ts must define forbiddenMoneyActionEndpoints');
+  }
+  if (!endpoints.includes('webhook-complete') || !endpoints.includes('auto-payout')) {
+    throw new Error('forbiddenMoneyActionEndpoints must block webhook-complete and auto-payout');
+  }
+  if (!endpoints.includes('authEndpoints')) {
+    throw new Error('endpoints.ts must define authEndpoints');
+  }
+
+  const sessionStorage = fs.readFileSync(path.join(root, 'src/api/sessionStorage.ts'), 'utf8');
+  if (!sessionStorage.includes('INTERNAL_TOKEN') || !sessionStorage.includes('webhook_secret')) {
+    throw new Error('sessionStorage must reject INTERNAL_TOKEN and webhook secrets');
+  }
+
+  const authApi = path.join(root, 'src/api/authApi.ts');
+  if (!fs.existsSync(authApi)) {
+    throw new Error('authApi.ts is required for Phase 4');
+  }
+
+  const contractSelfCheck = path.join(root, 'src/api/contractSelfCheck.ts');
+  if (!fs.existsSync(contractSelfCheck)) {
+    throw new Error('contractSelfCheck.ts is required for Phase 4');
+  }
+
   const httpClient = fs.readFileSync(path.join(root, 'src/api/httpClient.ts'), 'utf8');
-  if (!httpClient.includes("method !== 'GET'")) {
-    throw new Error('httpClient must block non-GET requests in Phase 3');
+  if (!httpClient.includes('isAuthEndpoint')) {
+    throw new Error('httpClient must allow auth POST endpoints only');
+  }
+
+  const accountScreen = fs.readFileSync(path.join(root, 'app/(tabs)/account.tsx'), 'utf8');
+  if (!accountScreen.includes('API contract status')) {
+    throw new Error('Account screen must show API contract status');
+  }
+
+  const loginScreen = fs.readFileSync(path.join(root, 'app/login.tsx'), 'utf8');
+  if (!loginScreen.includes('demo mode') && !loginScreen.includes('staging credentials')) {
+    throw new Error('Login screen must support demo and staging modes');
+  }
+
+  for (const file of ['src/api/endpoints.ts', 'src/api/config.ts', 'src/api/httpClient.ts']) {
+    const content = fs.readFileSync(path.join(root, file), 'utf8');
+    if (/https?:\/\/[^\s'"]*securepay\.ke/i.test(content)) {
+      throw new Error(`Production URL must not be hardcoded in ${file}`);
+    }
   }
 
   const secureLinksScreen = fs.readFileSync(path.join(root, 'app/(tabs)/securelinks.tsx'), 'utf8');
@@ -90,7 +136,7 @@ function readApiSafetyFiles() {
 
   const stagingApi = path.join(root, 'src/api/stagingSecurepayApi.ts');
   if (!fs.existsSync(stagingApi)) {
-    throw new Error('stagingSecurepayApi.ts is required for Phase 3');
+    throw new Error('stagingSecurepayApi.ts is required for Phase 3+');
   }
 }
 
@@ -108,7 +154,10 @@ for (const phrase of forbiddenPhrases) {
       !file.includes('uiTextGuard') &&
       !file.includes('securepayDoctrine') &&
       !file.includes('mobileActionGuards') &&
-      !file.includes('endpoints.ts')
+      !file.includes('endpoints.ts') &&
+      !file.includes('sessionStorage.ts') &&
+      !file.includes('authApi.ts') &&
+      !file.includes('contractSelfCheck.ts')
     ) {
       console.error(`Forbidden phrase "${phrase}" found in ${path.relative(root, file)}`);
       failed = true;

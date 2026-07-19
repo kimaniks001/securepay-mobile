@@ -124,3 +124,73 @@ export type ApiUser = {
   phone?: string;
   ksNumber: string;
 };
+
+/** Backend DTO shapes — snake_case and camelCase variants (contract assumptions). */
+export type BackendPaymentReadyReadinessDto = {
+  status?: string;
+  state?: string;
+  summary?: string;
+  is_ready?: boolean;
+  isReady?: boolean;
+  ready_for_staging_review_only?: boolean;
+  readyForStagingReviewOnly?: boolean;
+  review_hold?: string;
+  reviewHold?: string;
+  settlement_readiness?: string;
+  settlementReadiness?: string;
+  collection_payment_ready_readiness?: BackendPaymentReadyReadinessDto;
+  collectionPaymentReadyReadiness?: BackendPaymentReadyReadinessDto;
+  updated_at?: string;
+  updatedAt?: string;
+};
+
+export type BackendContributionSummaryDto = {
+  expected_contributions?: number;
+  expectedContributions?: number;
+  recorded_contributions?: number;
+  recordedContributions?: number;
+  fee_per_contribution_kes?: number;
+  feePerContributionKes?: number;
+  collection_contribution_summary?: BackendContributionSummaryDto;
+  collectionContributionSummary?: BackendContributionSummaryDto;
+};
+
+export type BackendSecureLinkDto = {
+  id?: string;
+  slug?: string;
+  title?: string;
+  name?: string;
+  kind?: string;
+  type?: string;
+  group_tier?: string;
+  groupTier?: string;
+  agreement_controlled_amount?: number;
+  agreementControlledAmount?: number;
+  amount?: number;
+  amount_minor?: number;
+  amountMinor?: number;
+  money_state?: string;
+  moneyState?: string;
+  status?: string;
+  money_state_label?: string;
+  moneyStateLabel?: string;
+  fee_kes?: number;
+  feeKes?: number;
+  review_hold?: string;
+  reviewHold?: string;
+  description?: string;
+  release_conditions?: string[];
+  releaseConditions?: string[];
+  provider_confirmed_at?: string;
+  providerConfirmedAt?: string;
+  settlement_readiness?: string;
+  settlementReadiness?: string;
+  payment_ready_readiness?: BackendPaymentReadyReadinessDto;
+  paymentReadyReadiness?: BackendPaymentReadyReadinessDto;
+  member_count?: number;
+  memberCount?: number;
+  contribution_summary?: BackendContributionSummaryDto;
+  contributionSummary?: BackendContributionSummaryDto;
+  updated_at?: string;
+  updatedAt?: string;
+};

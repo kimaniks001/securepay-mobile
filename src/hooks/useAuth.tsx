@@ -1,14 +1,17 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 import {
-  clearSecureSession,
+  getStoredSession,
+  loginWithDemoCredentials,
+  loginWithStagingCredentials,
+  logout as authLogout,
+} from '../api/authApi';
+import { isMockMode } from '../api/config';
+import {
   getAuthToken,
   getUserProfile,
-  saveAuthToken,
-  saveUserProfile,
 } from '../services/secureStorage';
 import type { UserProfile } from '../types/auth';
-import { MOCK_KS_NUMBER } from '../mocks/mockProfile';
 
 type AuthContextValue = {
   user: UserProfile | null;
@@ -20,14 +23,6 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-const DEMO_USER: UserProfile = {
-  id: 'usr_demo_001',
-  name: 'Kimani K.',
-  email: 'demo@securepay.app',
-  phone: '+254 700 000 000',
-  ksNumber: MOCK_KS_NUMBER,
-};
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -37,11 +32,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     async function restoreSession() {
       try {
-        const [token, profileJson] = await Promise.all([getAuthToken(), getUserProfile()]);
+        const [token, profileJson, session] = await Promise.all([
+          getAuthToken(),
+          getUserProfile(),
+          getStoredSession(),
+        ]);
         if (!mounted || !token || !profileJson) {
           return;
         }
-        setUser(JSON.parse(profileJson) as UserProfile);
+        const profile = JSON.parse(profileJson) as UserProfile;
+        if (session?.email) {
+          profile.email = session.email;
+        }
+        if (session?.ksNumber) {
+          profile.ksNumber = session.ksNumber;
+        }
+        setUser(profile);
       } finally {
         if (mounted) {
           setIsLoading(false);
@@ -56,22 +62,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signIn = useCallback(async (email: string, pin: string) => {
-    const normalizedEmail = email.trim().toLowerCase();
-    const sessionUser: UserProfile = {
-      ...DEMO_USER,
-      email: normalizedEmail,
-    };
-
-    await Promise.all([
-      saveAuthToken(`demo-token-${Date.now()}`),
-      saveUserProfile(JSON.stringify(sessionUser)),
-    ]);
-
-    setUser(sessionUser);
+    const result = isMockMode()
+      ? await loginWithDemoCredentials({ email, pin })
+      : await loginWithStagingCredentials({ email, pin });
+    setUser(result.user);
   }, []);
 
   const signOut = useCallback(async () => {
-    await clearSecureSession();
+    await authLogout();
     setUser(null);
   }, []);
 

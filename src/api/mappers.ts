@@ -19,6 +19,67 @@ import { feeDoctrine } from '../doctrine/securepayDoctrine';
 
 type UnknownRecord = Record<string, unknown>;
 
+/** Pick first defined field using snake_case and camelCase aliases. */
+export function pickField(record: UnknownRecord, ...keys: string[]): unknown {
+  for (const key of keys) {
+    if (record[key] !== undefined && record[key] !== null) {
+      return record[key];
+    }
+  }
+  return undefined;
+}
+
+/** Normalize backend record — unwrap nested collection_* wrappers when present. */
+export function normalizeDtoRecord(raw: unknown): UnknownRecord {
+  const record = asRecord(raw) ?? {};
+  const nested =
+    pickField(record, 'data', 'item', 'result', 'payload') ??
+    record;
+  const base = asRecord(nested) ?? record;
+  return base;
+}
+
+/** Parse KES amount from major units or minor units (cents). */
+export function parseAgreementAmount(record: UnknownRecord): number {
+  const major = pickField(
+    record,
+    'agreement_controlled_amount',
+    'agreementControlledAmount',
+    'amount',
+  );
+  if (typeof major === 'number' && Number.isFinite(major)) return major;
+
+  const minor = pickField(record, 'amount_minor', 'amountMinor', 'agreement_amount_minor');
+  if (typeof minor === 'number' && Number.isFinite(minor)) {
+    return minor / 100;
+  }
+  return 0;
+}
+
+export function resolvePaymentReadyReadinessSource(record: UnknownRecord): unknown {
+  return (
+    pickField(
+      record,
+      'payment_ready_readiness',
+      'paymentReadyReadiness',
+      'collection_payment_ready_readiness',
+      'collectionPaymentReadyReadiness',
+    ) ?? record
+  );
+}
+
+export function resolveContributionSummarySource(record: UnknownRecord): UnknownRecord {
+  const raw =
+    pickField(
+      record,
+      'contribution_summary',
+      'contributionSummary',
+      'collection_contribution_summary',
+      'collectionContributionSummary',
+    ) ?? {};
+  return asRecord(raw) ?? {};
+}
+
 function asRecord(value: unknown): UnknownRecord | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
   return value as UnknownRecord;
@@ -131,14 +192,27 @@ function feeForTier(tier?: GroupSecureLinkTier): number | undefined {
 }
 
 function mapPaymentReadyReadiness(raw: unknown): PaymentReadyReadiness {
-  const record = asRecord(raw) ?? {};
-  const status = mapMoneyState(record.status ?? record.state);
-  const reviewHoldActive = mapReviewHold(record.review_hold ?? record.reviewHold) === 'active';
-  const settlement = mapSettlementReadiness(record.settlement_readiness ?? record.settlementReadiness);
+  const record = normalizeDtoRecord(raw);
+  if (!record || Object.keys(record).length === 0) {
+    return {
+      status: 'not_ready',
+      label: 'Payment Ready readiness',
+      summary: 'Payment Ready readiness is not available from backend yet. Not payout-ready.',
+      isReady: false,
+      readyForStagingReviewOnly: false,
+      updatedAt: new Date().toISOString(),
+    };
+  }
+
+  const status = mapMoneyState(pickField(record, 'status', 'state'));
+  const reviewHoldActive = mapReviewHold(pickField(record, 'review_hold', 'reviewHold')) === 'active';
+  const settlement = mapSettlementReadiness(
+    pickField(record, 'settlement_readiness', 'settlementReadiness'),
+  );
   const providerConfirmed = status === 'provider_confirmed';
   const readyForStagingReviewOnly =
     status === 'ready_for_staging_review' ||
-    asBoolean(record.ready_for_staging_review_only ?? record.readyForStagingReviewOnly);
+    asBoolean(pickField(record, 'ready_for_staging_review_only', 'readyForStagingReviewOnly'));
 
   const blockedByReviewHold = reviewHoldActive;
   const blockedBySettlement = settlement === 'not_ready';
@@ -153,12 +227,12 @@ function mapPaymentReadyReadiness(raw: unknown): PaymentReadyReadiness {
         : providerConfirmed
           ? 'Provider-confirmed on backend. Payment Ready readiness is informational only — not payout.'
           : asString(
-              record.summary,
+              pickField(record, 'summary'),
               'Payment Ready readiness is pending backend checks. Not payout-ready.',
             ),
     isReady: false,
     readyForStagingReviewOnly,
-    updatedAt: asString(record.updated_at ?? record.updatedAt, new Date().toISOString()),
+    updatedAt: asString(pickField(record, 'updated_at', 'updatedAt'), new Date().toISOString()),
   };
 }
 
@@ -214,78 +288,78 @@ export function mapAccountReadiness(raw: unknown): AccountReadiness {
 }
 
 export function mapSecureLinkSummary(raw: unknown): SecureLinkSummary {
-  const record = asRecord(raw) ?? {};
-  const kindRaw = asString(record.kind ?? record.type, 'securelink').toLowerCase();
+  const record = normalizeDtoRecord(raw);
+  const kindRaw = asString(pickField(record, 'kind', 'type'), 'securelink').toLowerCase();
   const kind: SecureLinkKind =
     kindRaw.includes('group') ? 'group_securelink' : 'securelink';
-  const groupTier = mapGroupTier(record.group_tier ?? record.groupTier);
-  const moneyState = mapMoneyState(record.money_state ?? record.moneyState ?? record.status);
-  const reviewHold = mapReviewHold(record.review_hold ?? record.reviewHold);
+  const groupTier = mapGroupTier(pickField(record, 'group_tier', 'groupTier'));
+  const moneyState = mapMoneyState(
+    pickField(record, 'money_state', 'moneyState', 'status'),
+  );
+  const reviewHold = mapReviewHold(pickField(record, 'review_hold', 'reviewHold'));
 
   return {
-    id: asString(record.id ?? record.slug, 'unknown'),
-    slug: asString(record.slug, asString(record.id, 'unknown')),
-    title: asString(record.title ?? record.name, 'SecureLink'),
+    id: asString(pickField(record, 'id', 'slug'), 'unknown'),
+    slug: asString(pickField(record, 'slug', 'id'), 'unknown'),
+    title: asString(pickField(record, 'title', 'name'), 'SecureLink'),
     kind,
     groupTier,
-    agreementControlledAmount: asNumber(
-      record.agreement_controlled_amount ?? record.agreementControlledAmount ?? record.amount,
-    ),
+    agreementControlledAmount: parseAgreementAmount(record),
     currency: 'KES',
     moneyState: reviewHold === 'active' ? 'review_hold' : moneyState,
     moneyStateLabel: asString(
-      record.money_state_label ?? record.moneyStateLabel,
+      pickField(record, 'money_state_label', 'moneyStateLabel'),
       MONEY_STATE_LABELS[reviewHold === 'active' ? 'review_hold' : moneyState],
     ),
-    feeKes: asNumber(record.fee_kes ?? record.feeKes, feeForTier(groupTier) ?? 0) || feeForTier(groupTier),
+    feeKes: asNumber(pickField(record, 'fee_kes', 'feeKes'), feeForTier(groupTier) ?? 0) || feeForTier(groupTier),
     reviewHold,
-    updatedAt: asString(record.updated_at ?? record.updatedAt, new Date().toISOString()),
+    updatedAt: asString(pickField(record, 'updated_at', 'updatedAt'), new Date().toISOString()),
   };
 }
 
 export function mapSecureLinkDetail(raw: unknown): SecureLinkDetail {
-  const summary = mapSecureLinkSummary(raw);
-  const record = asRecord(raw) ?? {};
+  const record = normalizeDtoRecord(raw);
+  const summary = mapSecureLinkSummary(record);
   const settlementReadiness = mapSettlementReadiness(
-    record.settlement_readiness ?? record.settlementReadiness,
+    pickField(record, 'settlement_readiness', 'settlementReadiness'),
   );
 
-  const releaseRaw = record.release_conditions ?? record.releaseConditions;
+  const releaseRaw = pickField(record, 'release_conditions', 'releaseConditions');
   const releaseConditions = Array.isArray(releaseRaw)
     ? releaseRaw.map((item: unknown) => asString(item))
     : [];
 
   return {
     ...summary,
-    description: asString(record.description, ''),
+    description: asString(pickField(record, 'description'), ''),
     releaseConditions,
     providerConfirmedAt:
-      asString(record.provider_confirmed_at ?? record.providerConfirmedAt) || undefined,
+      asString(pickField(record, 'provider_confirmed_at', 'providerConfirmedAt')) || undefined,
     settlementReadiness,
     paymentReadyReadiness: mapPaymentReadyReadiness(
-      record.payment_ready_readiness ?? record.paymentReadyReadiness ?? record,
+      resolvePaymentReadyReadinessSource(record),
     ),
     isDemo: false,
   };
 }
 
 export function mapGroupSecureLinkDetail(raw: unknown): GroupSecureLinkDetail {
-  const detail = mapSecureLinkDetail(raw);
-  const record = asRecord(raw) ?? {};
-  const groupTier = mapGroupTier(record.group_tier ?? record.groupTier) ?? 'general';
-  const contribution = asRecord(record.contribution_summary ?? record.contributionSummary) ?? {};
+  const record = normalizeDtoRecord(raw);
+  const detail = mapSecureLinkDetail(record);
+  const groupTier = mapGroupTier(pickField(record, 'group_tier', 'groupTier')) ?? 'general';
+  const contribution = resolveContributionSummarySource(record);
   const feePerContribution =
     asNumber(
-      contribution.fee_per_contribution_kes ?? contribution.feePerContributionKes,
+      pickField(contribution, 'fee_per_contribution_kes', 'feePerContributionKes'),
       feeForTier(groupTier) ?? 20,
     ) || (feeForTier(groupTier) ?? 20);
 
   const contributionSummary: ContributionSummary = {
     expectedContributions: asNumber(
-      contribution.expected_contributions ?? contribution.expectedContributions,
+      pickField(contribution, 'expected_contributions', 'expectedContributions'),
     ),
     recordedContributions: asNumber(
-      contribution.recorded_contributions ?? contribution.recordedContributions,
+      pickField(contribution, 'recorded_contributions', 'recordedContributions'),
     ),
     feePerContributionKes: feePerContribution,
     currency: 'KES',
@@ -295,33 +369,33 @@ export function mapGroupSecureLinkDetail(raw: unknown): GroupSecureLinkDetail {
     ...detail,
     kind: 'group_securelink',
     groupTier,
-    memberCount: asNumber(record.member_count ?? record.memberCount),
+    memberCount: asNumber(pickField(record, 'member_count', 'memberCount')),
     feeKes: feePerContribution,
     contributionSummary,
   };
 }
 
 export function mapTransaction(raw: unknown): SecurePayTransaction {
-  const record = asRecord(raw) ?? {};
-  const moneyState = mapMoneyState(record.money_state ?? record.moneyState ?? record.status);
-  const activityLabel = mapActivityLabel(record.activity_label ?? record.activityLabel ?? record.type);
+  const record = normalizeDtoRecord(raw);
+  const moneyState = mapMoneyState(pickField(record, 'money_state', 'moneyState', 'status'));
+  const activityLabel = mapActivityLabel(
+    pickField(record, 'activity_label', 'activityLabel', 'type'),
+  );
 
   return {
-    id: asString(record.id, `txn_${Date.now()}`),
-    secureLinkSlug: asString(record.secure_link_slug ?? record.secureLinkSlug) || undefined,
-    title: asString(record.title ?? record.description, 'SecureLink activity'),
-    agreementControlledAmount: asNumber(
-      record.agreement_controlled_amount ?? record.agreementControlledAmount ?? record.amount,
-    ),
+    id: asString(pickField(record, 'id'), `txn_${Date.now()}`),
+    secureLinkSlug: asString(pickField(record, 'secure_link_slug', 'secureLinkSlug')) || undefined,
+    title: asString(pickField(record, 'title', 'description'), 'SecureLink activity'),
+    agreementControlledAmount: parseAgreementAmount(record),
     currency: 'KES',
     activityLabel,
     activityDisplay: asString(
-      record.activity_display ?? record.activityDisplay,
+      pickField(record, 'activity_display', 'activityDisplay'),
       MONEY_STATE_LABELS[moneyState],
     ),
     moneyState,
-    createdAt: asString(record.created_at ?? record.createdAt, new Date().toISOString()),
-    note: asString(record.note) || undefined,
+    createdAt: asString(pickField(record, 'created_at', 'createdAt'), new Date().toISOString()),
+    note: asString(pickField(record, 'note')) || undefined,
   };
 }
 
