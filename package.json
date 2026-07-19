@@ -8,7 +8,10 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
-    "check:ui-safety": "node scripts/check-mobile-ui-safety.mjs"
+    "check:ui-safety": "node scripts/check-mobile-ui-safety.mjs",
+    "sync:web-reference": "bash scripts/clone-web-reference.sh",
+    "diff:web-mobile": "node scripts/diff-web-mobile-alignment.mjs",
+    "wire:web-reference": "npm run sync:web-reference && npm run diff:web-mobile"
   },
   "dependencies": {
     "expo": "~57.0.7",

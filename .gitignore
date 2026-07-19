@@ -37,6 +37,7 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
-# generated native folders
-/ios
-/android
+# generated web reference clone (Option B)
+/reference/
+docs/WEB_MOBILE_ALIGNMENT_REPORT.md
+

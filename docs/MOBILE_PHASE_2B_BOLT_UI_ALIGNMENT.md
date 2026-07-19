@@ -10,15 +10,45 @@ Phase 2B translates web identity into native mobile components while preserving 
 
 | Repo | Role |
 | --- | --- |
-| `kimaniks001/Ulyamwisho` | Visual and journey reference (Bolt web UI) |
+| `kimaniks001/Ulyamwisho` | Visual and journey reference (Bolt web UI) — legacy name |
+| `kimaniks001/securepaymain` | Preferred web frontend repo (Option B) |
 | `kimaniks001/securepay-mobile` | Expo / React Native mobile client |
 
-**Inspection status:** `Ulyamwisho` was **not available** locally or via public clone during Phase 2B. Alignment applied SecurePay doctrine, Phase 2 API/mock foundation, and the known Bolt design language specified in the Phase 2B brief.
+**Inspection status:** Web frontend was **not available** during initial Phase 2B. Option B wiring scripts are in place; run after the web repo is pushed.
 
-To inspect locally later:
+### Option B — Wire web reference when available
+
+1. Create and push the Bolt frontend to GitHub (preferred repo name: `securepaymain`):
 
 ```bash
-git clone https://github.com/kimaniks001/Ulyamwisho.git ../Ulyamwisho
+# On your machine where the Bolt export lives
+cd /path/to/Ulyamwisho
+git init
+git add .
+git commit -m "Initial SecurePay web frontend"
+gh repo create kimaniks001/securepaymain --public --source=. --remote=origin --push
+```
+
+2. From `securepay-mobile`, clone beside mobile and generate alignment report:
+
+```bash
+npm run wire:web-reference
+```
+
+This will:
+- Clone to `reference/securepaymain` (gitignored)
+- Write `docs/WEB_MOBILE_ALIGNMENT_REPORT.md` with token/journey/copy diffs
+
+Custom repo URL:
+
+```bash
+SECUREPAY_WEB_REPO_URL=https://github.com/<org>/<repo>.git npm run wire:web-reference
+```
+
+To inspect locally without scripts:
+
+```bash
+git clone https://github.com/kimaniks001/securepaymain.git reference/securepaymain
 ```
 
 ## C. What must match the Bolt web UI
